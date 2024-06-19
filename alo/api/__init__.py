@@ -27,6 +27,7 @@ from . import VisualizationPCAApi
 from . import VisualizationPCAApi_V1
 from . import VisualizationISOMAPApi
 from . import VisualizationUMAPApi
+from . import VisualizationMDSApi
 from . import getFlag
 from . import Visualization
 from . import newVisualization
