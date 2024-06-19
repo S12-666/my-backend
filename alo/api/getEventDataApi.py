@@ -4,7 +4,7 @@ sampleChoose
 from flask_restful import Resource, reqparse
 from flask import json
 from . import api
-from ..controller.getMareyDataController import ComputeMareyData
+from ..controller.newGetMareyDataController import newComputeMareyData
 import pika, traceback
 from ..controller.iconChangeController import eventChangeDataController
 import json
