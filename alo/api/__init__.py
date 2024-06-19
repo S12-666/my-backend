@@ -22,7 +22,9 @@ from . import plateYieldStaisticsApi
 from . import diagnosisDataApi
 # from . import detailProcessApi
 from . import VisualizationTsneApi
+from . import VisualizationTsneApi_V1
 from . import VisualizationPCAApi
+from . import VisualizationPCAApi_V1
 from . import VisualizationISOMAPApi
 from . import VisualizationUMAPApi
 from . import getFlag
@@ -40,3 +42,7 @@ from . import monitorDataByTimeApi
 from . import newVisualizationByBatch
 from . import getEventDataApi
 # from . import modelPredictCsvAllFlagApi
+from . import GetNumberOfPlatesByTimeApi
+from . import GetScatterDataByTimeApi
+from . import DiagnosesByUpidsApi
+from . import RediagnosesApi
