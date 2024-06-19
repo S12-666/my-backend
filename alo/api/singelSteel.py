@@ -275,6 +275,31 @@ def modeldata(parser, selection, startTime, endTime):
     data, col_names = getLabelData(SQL)
     return data, status_cooling
 
+def  modeldata_1(parser, selection, current_time, limit):
+    SQL, status_cooling = filterSQL(parser)
+
+    select = ','.join(selection)
+    ismissing = ['dd.status_stats']
+    if(SQL!=''):
+        for i in ismissing:
+            SQL+= ' and '+i+'= '+'0'
+    if (SQL==''):
+        SQL="where "+SQL
+        for i in ismissing:
+            SQL+= ' '+i+'= '+'0'+' and '
+        SQL=SQL[:-4]
+
+    SQL = SQL + ' and dd.status_cooling = ' + str(status_cooling) + " "
+    # Limit = ' ORDER BY dd.toc  DESC Limit ' + str(limit)
+    Limit = ''' and dd.toc >= '{current_time}'::timestamp
+        order by abs(extract(epoch
+        from dd.toc - '{current_time}'::timestamp))
+        limit {limition}; '''.format(current_time=current_time, limition=limit)
+
+    SQL = 'select ' + select + singleSQL_lefttable + SQL + Limit
+    # print(SQL)
+    data,col_names = getLabelData(SQL)
+    return data, status_cooling
 
 def cate_modeldata(parser, selection, Limit):
     SQL, status_cooling = filterSQL(parser)
