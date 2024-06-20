@@ -7,7 +7,7 @@ import datetime as dt
 from ..models.getMareyDataFromDB import *
 
 
-class ComputeMareyData:
+class ComputeMareyData_1:
     def __init__(self, type, upid, start_time, end_time, steelspec, tgtplatethickness):
 
         rows, col_names = GetMareyData.getMareyData(type, upid, start_time, end_time, steelspec, tgtplatethickness)
