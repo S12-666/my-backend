@@ -4,7 +4,7 @@ sampleChoose
 from flask_restful import Resource, reqparse
 from flask import json
 from . import api
-from ..controller.getMareyDataController import ComputeMareyData
+from ..controller.getMareyDataController import ComputeMareyData_1
 import pika, traceback
 
 parser = reqparse.RequestParser(trim=True, bundle_errors=True)
@@ -25,7 +25,7 @@ class GetMareyStationsDataApi(Resource):
         steelspec = args["steelspec"]
         tgtplatethickness = json.loads(args["tgtplatethickness"])
 
-        res = ComputeMareyData(type="stations",
+        res = ComputeMareyData_1(type="stations",
                                upid=upid,
                                start_time=start_time,
                                end_time=end_time,
@@ -51,7 +51,7 @@ class GetMareyTimesDataApi(Resource):
         steelspec = args["steelspec"]
         tgtplatethickness = json.loads(args["tgtplatethickness"])
 
-        res = ComputeMareyData(type="times",
+        res = ComputeMareyData_1(type="times",
                                upid=upid,
                                start_time=start_time,
                                end_time=end_time,
