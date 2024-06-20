@@ -1,0 +1,46 @@
+import numpy as np
+import pandas as pd
+from .define import data_names, without_cooling_data_names
+def getFqcList(fqc_label):
+    return fqc_label['method1']['data'] if fqc_label else []
+def plateHasDefect(status: int, fqc_label: dict) -> int:
+    if status == 1:
+        return 404
+    label = getFqcList(fqc_label)
+    if np.array(label).sum() == 5:
+        return 1
+    else:
+        return 0
+def plateDetailedDefect(status: int, fqc_label: dict, idx: int) -> int:
+    if status == 1:
+        return 404
+    else:
+        label = getFqcList(fqc_label)
+        return label[idx]
+def fillListTail(data: list, length: int, fill=0) -> list:
+    if len(data) >= length:
+        return data
+    return data + (length - len(data)) * [fill]
+def rawDataToModelData(data_df):
+    data_matrix = []
+    labels_matrix = []
+    feature_length = max(len(data_names), len(without_cooling_data_names))
+    for idx, row in data_df.iterrows():
+        status_cooling = row['status_cooling']
+        if status_cooling == 0:
+            iter_names = data_names
+            labels = getFqcList(row['fqc_label'])
+        else:
+            iter_names = without_cooling_data_names
+            labels = getFqcList(row['fqc_label'])
+        item_data = []
+        for name in iter_names:
+            try:
+                item_data.append(row['stats'][name])
+            except:
+                item_data.append(0)
+        item_data = list(map(lambda x: 0.0 if x is None else x, item_data))
+        item_data = fillListTail(item_data, feature_length, 0)
+        data_matrix.append(item_data)
+        labels_matrix.append(labels)
+    return data_matrix, labels_matrix
