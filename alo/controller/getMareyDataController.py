@@ -10,7 +10,7 @@ from ..models.getMareyDataFromDB import *
 class ComputeMareyData_1:
     def __init__(self, type, upid, start_time, end_time, steelspec, tgtplatethickness):
 
-        rows, col_names = GetMareyData.getMareyData(type, upid, start_time, end_time, steelspec, tgtplatethickness)
+        rows, col_names = GetMareyData.getMareyData_1(type, upid, start_time, end_time, steelspec, tgtplatethickness)
 
         self.marey_data = pd.DataFrame(data=rows, columns=col_names).dropna(axis=0, how='all').reset_index(drop=True)
         # self.marey_data.cooling_start_temp = self.marey_data.cooling_start_temp.replace('None',0)
