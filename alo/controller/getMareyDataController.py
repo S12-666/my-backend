@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import datetime as dt
 
-from ..models.getMareyDataFromDB import *
+from ..models.getMareyDataFromDB_V1 import *
 
 
 class ComputeMareyData_1:
