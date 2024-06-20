@@ -451,3 +451,46 @@ def getData_bytime(selection, ismissing, tgtwidthSelect, tgtlengthSelect, tgtthi
 
     conn.close()
     return rows,col_names
+
+def getArgsFromParser(parser, keys):
+    for key in keys:
+        parser.add_argument(key, type=str, required=True)
+    args = parser.parse_args(strict=True)
+    return args
+
+def queryDataFromDatabase(sql: str):
+    configArr = readConfig()
+    conn = psycopg2.connect(database=configArr[0], user=configArr[1], password=configArr[2], host=configArr[3], port=configArr[4])
+    cursor = conn.cursor()
+    cursor.execute(sql)
+    rows = cursor.fetchall()
+    col_names = []
+    for elt in cursor.description:
+        col_names.append(elt[0])
+    conn.close()
+    return rows, col_names
+
+def response_wrapper(res, code=0, msg=''):
+    """
+        code:
+            0 => success
+            1 => response warning
+            2 => request parameter error
+            4 => no response content
+            5 => data calculation error
+    """
+    if code == 1:
+        msg = 'something warning' if len(msg) == 0 else msg
+    elif code == 2:
+        msg = 'request parameter error' if len(msg) == 0 else msg
+    elif code == 5:
+        msg = 'data calculation error' if len(msg) == 0 else msg
+    elif len(res) == 0:
+        msg = 'no response data' if len(msg) == 0 else msg
+        code = 4
+    else:
+        msg = 'ok' if len(msg) == 0 else msg
+    return {'code': code, 'msg': msg, 'data': res}, 200, {'Access-Control-Allow-Origin': '*'}
+
+def format_value(val: float, s: str = '.4f') -> float:
+    return float(format(val, s))
