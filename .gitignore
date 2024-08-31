@@ -9,3 +9,4 @@ dist
 .idea/
 instance/*
 __pycache__
+config_local.txt
