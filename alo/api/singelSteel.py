@@ -249,7 +249,8 @@ singleSQL_lefttable = ''' from  dcenter.l2_m_primary_data lmpd
             left join dcenter.l2_fu_acc_t lfat on lmpd.slabid = lfat.slab_no
             left join dcenter.l2_m_plate lmp   on lmpd.slabid = lmp.slabid
             left join dcenter.l2_cc_pdi lcp    on lmpd.slabid = lcp.slab_no
-            right join app.deba_dump_data dd    on dd.upid = lmp.upid '''
+            right join app.deba_dump_data dd    on dd.upid = lmp.upid
+            left join  app.deba_dump_properties ddp on ddp.upid = dd.upid'''
 
 
 def modeldata(parser, selection, startTime, endTime):
@@ -428,7 +429,7 @@ class singelSteel(Resource):
     '''
     singelSteel
     '''
-    def get(self,upid):
+    def get(self, upid, default):
         """
         get
         ---
@@ -444,7 +445,12 @@ class singelSteel(Resource):
             200:
                 description: 执行成功
         """
-        # lmpd.tgtplatethickness2,                    lfat.slab_thickness,
+        selection = []
+        if (default == 'performance'):
+            selection = ["dd.status_fqc", 'ddp.p_f_label']
+        elif (default == 'thickness'):
+            selection = ["dd.status_fqc", 'dd.p_f_label']
+        select = ','.join(selection)
 
         sql = '''select lmpd.slabid, 
                     lmpd.upid,
@@ -475,9 +481,7 @@ class singelSteel(Resource):
                     dd.status_cooling,
                     dd.status_furnace,
                     dd.status_rolling,
-                    dd.status_fqc,
-                    dd.fqc_label
-                    ''' + singleSQL_lefttable + ' where lmpd.upid='+repr(upid)+'order by lmpd.toc'
+                    '''+ select + singleSQL_lefttable + ' where lmpd.upid='+repr(upid)+'order by lmpd.toc'
         jsondata, col_names = getLabelData(sql)
         if len(jsondata) == 0:
             return '', 204, {'Access-Control-Allow-Origin': '*'}
@@ -486,159 +490,13 @@ class singelSteel(Resource):
         if jsondata[0][-2] == 1:
             label = 404
             jsondata = list(jsondata[0])
-        elif jsondata[0][-2] == 0:
+        elif jsondata[0][-2] == 0: # 有性能检测标签
             jsondata = list(jsondata[0])
-            jsondata[-1] = jsondata[-1]['method1']['data']
-            if np.array(jsondata[-1]).sum() == 5:
+            if 0 not in jsondata[-1]: # 判断是否存在0
                 label = 1
         jsondata[4] = str(jsondata[4])
         jsondata = dict(zip(col_names, jsondata))
         jsondata["label"] = label
         return jsondata, 200, {'Access-Control-Allow-Origin': '*'}
 
-class SteelNumber(Resource):
-    '''
-    SteelNumber
-    '''
-    def post(self):
-        """ 
-        post
-        ---
-        tags:
-            - 诊断视图数据
-        parameters:
-            - in: body
-                name: body
-                schema:
-                properties:
-                upid:
-                #   type: string
-                #   default: 1
-                #   description: 数据预处理
-                #   task_id:
-                #   type: string
-                #   default: 1
-                #   description: 任务id
-                required: true
-        responses:
-            200:
-            description: 执行成功
-        """
-        # Query = {}
-        # label = [ "tgtwidth", "tgtplatelength2", "slab_thickness", "tgttmplatetemp", "cooling_start_temp", "cooling_stop_temp", "cooling_rate1"]
-        # table = ["lmpd","lmpd","lfat","lmpd","lcp","lcp","lcp"]
-        # tablename = dict(zip(label,table))
-        # for index in label:
-        #     parser.add_argument(index, type=str, required=True)
-        # parser.add_argument("productcategory", type=str, required=True)
-        # parser.add_argument("steelspec", type=str, required=True)
-        # args = parser.parse_args(strict=True)
-
-        # for index in label:
-        #     Query[index] = json.loads(args[index])
-        # SQL=''
-        # for index in Query:
-        #     if(len(Query[index]) != 0):
-        #         SQL =SQL+tablename[index]+'.' + index + ' > ' + str(Query[index][0]) +' and ' + tablename[index] +'.' + index + ' < ' + str(Query[index][1]) +' and '
-        
-        # Query = {}
-        # label = ["productcategory", "steelspec"]
-        # table = ["lmpd","lmpd"]
-        # tablename = dict(zip(label,table))
-        # for index in label:
-        #     Query[index] = json.loads(args[index])
-        # for index in Query:
-        #     if(len(Query[index]) != 0):
-        #         for item in Query[index]:
-        #             SQL =SQL+tablename[index]+'.' + index + ' = ' + repr(item) +' or '
-        #         SQL=SQL[:-4]
-        #         SQL=SQL+' and '
-        # SQL=SQL[:-4]
-        # if (SQL!=''):
-        #     SQL="where "+SQL
-        SQL, status_cooling = filterSQL(parser)
-        jsondata, col_names = getLabelData('''select count(lmpd.slabid)''' + lefttable + SQL)
-        return jsondata[0][0], 200, {'Access-Control-Allow-Origin': '*'}
-
-class distinctCategory(Resource):
-    '''
-    distinctCategory
-    '''
-    def post(self,category):
-        """ 
-        post
-        ---
-        tags:
-            - 诊断视图数据
-        parameters:
-            - in: body
-                name: body
-                schema:
-                properties:
-                upid:
-                #   type: string
-                #   default: 1
-                #   description: 数据预处理
-                #   task_id:
-                #   type: string
-                #   default: 1
-                #   description: 任务id
-                required: true
-        responses:
-            200:
-            description: 执行成功
-        """
-        Query = {}
-        label = [ "productcategory", "steelspec","tgtwidth", "tgtplatelength2", "slab_thickness", "tgttmplatetemp", "cooling_start_temp", "cooling_stop_temp", "cooling_rate1"]
-        table = ["lmpd","lmpd","lmpd","lmpd","lfat","lmpd","lcp","lcp","lcp"]
-        tablename = dict(zip(label,table))
-        category=tablename[category]+'.'+category
-        SQL, status_cooling = filterSQL(parser)
-        jsondata ,col_names=getLabelData('select '+category+ ' ,COUNT('+category+') '+ lefttable+ SQL +' GROUP BY ' +category)
-        # print('select '+category+ ' ,COUNT('+category+') '+ lefttable+ SQL +' GROUP BY ' +category)
-        jsondata = dict(json.loads(json.dumps(jsondata, default=str, ensure_ascii=False)))
-        return jsondata, 200, {'Access-Control-Allow-Origin': '*'}
-class distinct(Resource):
-    '''
-    distinct
-    '''
-    def get(self,category):
-        """ 
-        post
-        ---
-        tags:
-            - 诊断视图数据
-        parameters:
-            - in: body
-                name: body
-                schema:
-                properties:
-                upid:
-                #   type: string
-                #   default: 1
-                #   description: 数据预处理
-                #   task_id:
-                #   type: string
-                #   default: 1
-                #   description: 任务id
-                required: true
-        responses:
-            200:
-            description: 执行成功
-        """
-        Query = {}
-        label = [ "productcategory", "steelspec","tgtwidth", "tgtplatelength2", "slab_thickness", "tgttmplatetemp", "cooling_start_temp", "cooling_stop_temp", "cooling_rate1"]
-        table = ["lmpd","lmpd","lmpd","lmpd","lfat","lmpd","lcp","lcp","lcp"]
-        tablename = dict(zip(label,table))
-        category=tablename[category]+'.'+category
-        jsondata ,col_names=getLabelData('select distinct('+category+') '+ lefttable)
-        categories=[]
-        for index in jsondata:
-            categories.append(index[0])
-        # print(jsondata)
-        # print(categories)
-        return categories, 200, {'Access-Control-Allow-Origin': '*'}
-api.add_resource(SteelNumber, '/v1.0/model/SteelNumber')
-api.add_resource(singelSteel, '/v1.0/model/singelSteel/<upid>/')
-api.add_resource(distinctCategory, '/v1.0/model/distinctCategory/<category>')
-api.add_resource(distinct, '/v1.0/model/distinct/<category>/')
+api.add_resource(singelSteel, '/v1.0/model/singelSteel/<upid>/<default>/')
