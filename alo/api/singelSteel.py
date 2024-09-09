@@ -113,6 +113,7 @@ def filterSQL(parser):
     parser.add_argument("productcategory", type=str, required=True)
     parser.add_argument("steelspec", type=str, required=True)
     parser.add_argument("status_cooling", type=str, required=True)
+    parser.add_argument("fqcflag", type=str, required=False)  # 如果是可选的参数
     args = parser.parse_args(strict=True)
 
     status_cooling = args["status_cooling"]

@@ -29,9 +29,12 @@ class RollingPassStatistics:
             pass_list.append(len(item[0]['meas']['bendingforce']))
             if item[2] == 1:
                 label_list.append(404)
-            else:
-                if np.array(item[1]['method1']['data']).sum() == 5:  # fqc_label
-                    label_list.append(1)
+            elif item[2] == 0:
+                if 0 not in item[1]:
+                    if (np.array(item[1]).sum() == 10) or (len(item[1]) == 0): # fqc_label
+                        label_list.append(404)
+                    else:
+                        label_list.append(1)
                 else:
                     label_list.append(0)
         pass_statistics_df = pd.DataFrame({"pass": pass_list, "label":label_list}).sort_values(by=["pass", "label"])

@@ -15,13 +15,14 @@ lefttable = ''' from  dcenter.l2_m_primary_data lmpd
             left join dcenter.l2_fu_acc_t lfat on lmpd.slabid = lfat.slab_no
             left join dcenter.l2_m_plate lmp   on lmpd.slabid = lmp.slabid
             left join dcenter.l2_cc_pdi lcp    on lmpd.slabid = lcp.slab_no
-            left join app.deba_dump_data dd   on dd.upid = lmp.upid '''
+            left join app.deba_dump_data dd   on dd.upid = lmp.upid
+            right join app.deba_dump_properties ddp ON ddp.upid = dd.upid '''
 
 class newVisualization(Resource):
     '''
     Visualization
     '''
-    def post(self, upid, process, deviation, limitation):
+    def post(self, upid, process, deviation, limitation, fault_type):
         """
         post
         ---
@@ -45,6 +46,13 @@ class newVisualization(Resource):
           200:
             description: 执行成功
         """
+
+        newselection = []
+        if (fault_type == 'performance'):
+            newselection = 'ddp.p_f_label'
+        elif (fault_type == 'thickness'):
+            newselection = 'ddp.p_f_label'
+
         SQL, status_cooling, fqcflag = new_filterSQL(parser)
         deviation= 100 * float(deviation)
         limit = 5
@@ -77,19 +85,19 @@ class newVisualization(Resource):
         selection=[]
         ismissing = []
         if (process=='cool'):
-            selection = ["dd.cooling",'dd.fqc_label','dd.status_cooling']
+            selection = ["dd.cooling", newselection, 'dd.status_cooling']
             if fqcflag == 0:
                 ismissing = "dd.status_cooling = 0 and dd.status_fqc = 0"
             elif fqcflag == 1:
                 ismissing = "dd.status_cooling = 0"
         if (process=='heat'):
-            selection = ["dd.furnace",'dd.fqc_label','dd.status_furnace']
+            selection = ["dd.furnace", newselection,'dd.status_furnace']
             if fqcflag == 0:
                 ismissing = "dd.status_furnace = 0 and dd.status_fqc = 0"
             elif fqcflag == 1:
                 ismissing = "dd.status_furnace = 0"
         if (process=='roll'):
-            selection = ["dd.rolling",'dd.fqc_label','dd.status_rolling']
+            selection = ["dd.rolling", newselection, 'dd.status_rolling']
             if fqcflag == 0:
                 ismissing = "dd.status_rolling = 0 and dd.status_fqc = 0"
             elif fqcflag == 1:
@@ -107,8 +115,8 @@ class newVisualization(Resource):
 
         if fqcflag == 0:
             for item in data:
-                flags = item[1]['method1']['data']
-                if np.array(flags).sum() == 5:
+                flags = item[1]
+                if 1 in flags:
                     goodData.append(item)
         elif fqcflag == 1:
             goodData = data
@@ -324,8 +332,12 @@ class newVisualization(Resource):
 
 
 class RollingPassStatisticsApi(Resource):
-    def post(self, limitation):
-        selection = ["dd.rolling", 'dd.fqc_label', 'dd.status_fqc']
+    def post(self, limitation, fault_type):
+        selection = []
+        if (fault_type == 'performance'):
+            selection = ["dd.rolling", 'ddp.p_f_label', 'dd.status_fqc']
+        elif (fault_type == 'thickness'):
+            selection = ["dd.rolling", 'ddp.p_f_label', 'dd.status_fqc']
         ismissing = "dd.status_rolling = 0 "
 
         rollingPass_instance = RollingPassStatistics()
@@ -336,5 +348,5 @@ class RollingPassStatisticsApi(Resource):
         return result, status_code, {'Access-Control-Allow-Origin': '*'}
 
 
-api.add_resource(newVisualization, '/v1.0/model/newVisualization/<upid>/<process>/<deviation>/<limitation>')
-api.add_resource(RollingPassStatisticsApi, '/v1.0/model/RollingPassStatisticsApi/<limitation>')
+api.add_resource(newVisualization, '/v1.0/model/newVisualization/<upid>/<process>/<deviation>/<limitation>/<fault_type>')
+api.add_resource(RollingPassStatisticsApi, '/v1.0/model/RollingPassStatisticsApi/<limitation>/<fault_type>')
