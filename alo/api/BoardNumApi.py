@@ -12,11 +12,16 @@ parser = reqparse.RequestParser(trim=True, bundle_errors=True)
 
 class BoardNumApi(Resource):
 
-    def post(self, upid, limit):
+    def post(self, upid, limit, fault_type):
 
         computeBoardNum_instance = ComputeBoardNum(upid)
 
-        selection = ['dd.upid', 'dd.status_fqc', 'dd.fqc_label']
+        selection = []
+        if fault_type == 'perfromance':
+            selection = ['dd.upid', 'dd.status_fqc', 'ddp.p_f_label']
+        elif fault_type == 'thickness':
+            selection  = ['dd.upid', 'dd.status_fqc', 'ddp.p_f_label']
+
         data = computeBoardNum_instance.getData(parser, selection, limit)
 
         try:
@@ -30,4 +35,4 @@ class BoardNumApi(Resource):
         return result, status_code, {'Access-Control-Allow-Origin': '*'}
 
 
-api.add_resource(BoardNumApi, '/v1.0/baogangPlot/boardNumApi/<upid>/<limit>')
+api.add_resource(BoardNumApi, '/v1.0/baogangPlot/boardNumApi/<upid>/<limit>/<fault_type>')

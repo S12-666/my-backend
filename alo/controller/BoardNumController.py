@@ -23,7 +23,8 @@ class ComputeBoardNum:
         lefttable = ''' from  dcenter.l2_m_primary_data lmpd
                             left join dcenter.l2_m_plate lmp on lmpd.slabid = lmp.slabid
                             left join dcenter.l2_cc_pdi lcp  on lmpd.slabid = lcp.slab_no
-                            right join app.deba_dump_data dd on dd.upid = lmp.upid '''
+                            right join app.deba_dump_data dd on dd.upid = lmp.upid 
+                            right join app.deba_dump_properties ddp on ddp.upid = dd.upid '''
         if (SQL != ''):
             for i in ismissing:
                 SQL += ' and ' + i + '= ' + '0'
@@ -47,34 +48,37 @@ class ComputeBoardNum:
 
         bad_count = 0
         good_count = 0
-        noFQC_count = 0
-        fqc_type_list = []
-        fqc_type_name = ["bend", "abnormalThickness", "horizonWave", "leftWave", "rightWave"]
+        # noFQC_count = 0
+        no_p_count = 0
+        p_type_list = []
+        p_type_name = ["gs", "pa", "pf", "pn", "ps"]
 
         for item in data:
             if item[1] == 1:    # status_fqc
-                noFQC_count += 1
+                no_p_count += 1
             elif item[1] == 0:
-                if np.array(item[2]['method1']['data']).sum() == 5:     # fqc_label
-                    good_count += 1
-                else:
+                if (np.array(item[2]).sum() == 10) or (len(item[2]) == 0):     # fqc_label
+                    no_p_count += 1
+                elif 0 in item[2]:
                     bad_count += 1
-                    item_fqc = item[2]['method1']['data']
-                    item_fqc = list(map(lambda x: 1 if x == 0 else 0, item_fqc))
-                    fqc_type_list.append(item_fqc)
+                else:
+                    good_count += 1
+                    item_p = item[2]
+                    item_p = list(map(lambda x: 1 if x == 0 else 0, item_p))
+                    p_type_list.append(item_p)
 
-        fqc_type_count = np.sum(np.array(fqc_type_list), axis=0).tolist()
+        p_type_count = np.sum(np.array(p_type_list), axis=0).tolist()
 
         result = {}
-        result["noFQC_count"] = noFQC_count
+        result["no_p_count"] = no_p_count
         result["good_count"] = good_count
         result["bad_count"] = bad_count
         result["total_count"] = len(data)
-        fqc_type_len = len(fqc_type_list)
-        for i, type in enumerate(fqc_type_name):
+        fqc_type_len = len(p_type_list)
+        for i, type in enumerate(p_type_name):
             if fqc_type_len == 0:
                 result[type] = 0
             else:
-                result[type] = fqc_type_count[i]
+                result[type] = p_type_count[i]
 
         return 200, result
