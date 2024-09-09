@@ -211,13 +211,18 @@ class createDiagResu:
         except Exception:
             self.paramsIllegal = True
 
-    def run(self, otherData, data_names, data_names_meas, sorttype, fqcflag):
+    def run(self, otherData, data_names, data_names_meas, sorttype, fqcflag, fault_type):
         '''
         run
         '''
         # print(self.upid)
+        selection = []
+        if (fault_type == 'performance'):
+            selection = 'ddp.p_f_label'
+        elif (fault_type == 'thickness'):
+            selection = 'ddp.p_f_label'
         ismissing = {'status_stats':True}
-        data,columns = new_getData(['upid', 'platetype', 'tgtwidth','tgtlength','tgtthickness','stats','fqc_label', 'toc'], ismissing, [], [], [], [], [self.upid], [], '', '')
+        data,columns = new_getData(['dd.upid', 'dd.platetype', 'dd.tgtwidth','dd.tgtlength','dd.tgtthickness','dd.stats', selection, 'dd.toc'], ismissing, [], [], [], [], [self.upid], [], '', '')
         data_df = pd.DataFrame(data=data, columns=columns).dropna(axis=0, how='any').reset_index(drop=True)
         if len(data_df) == 0:
             return 400, 400, 400, 400
@@ -235,10 +240,13 @@ class createDiagResu:
 
         if fqcflag == 0:
             for item in otherData:
-                flags = item[6]['method1']['data']
+                flags = item[6]
                 label = 0
-                if np.array(flags).sum() == 5:
-                    label = 1
+                if 0 not in flags:
+                    if (np.array(flags).sum() == 10) or (len(flags) == 0):
+                        label = 404
+                    else:
+                        label = 1
                 labelArr.append(label)
 
                 item_data = []

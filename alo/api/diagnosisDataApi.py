@@ -50,7 +50,7 @@ class diagnosisDataApi(Resource):
     '''
     diagnosisDataApi
     '''
-    def post(self,upid, sorttype, limit):
+    def post(self,upid, sorttype, limit, fault_type):
         """ 
         post
         ---
@@ -86,11 +86,16 @@ class diagnosisDataApi(Resource):
         # length = float(args["length"])
         # thickness = float(args["thickness"])
         # platetype=json.loads(args["platetype"])
+        selection = []
+        if (fault_type == 'performance'):
+            selection = 'ddp.p_f_label'
+        elif (fault_type == 'thickness'):
+            selection = 'ddp.p_f_label'
 
 
         data, _, status_cooling, fqcflag = new_modeldata(parser,
                                                 ['dd.upid', 'lmpd.productcategory', 'dd.tgtwidth','dd.tgtlength',
-                                                 'dd.tgtthickness','dd.stats','dd.fqc_label', 'dd.toc'],
+                                                 'dd.tgtthickness','dd.stats', selection, 'dd.toc'],
                                                 limit)
 
         # print(len(data))
@@ -115,7 +120,7 @@ class diagnosisDataApi(Resource):
                 _data_names = without_cooling_data_names
 
             createDiagResu_instance = createDiagResu(upid)
-            result, outOfGau, PCAT2, PCASPE, good_num = createDiagResu_instance.run(data, _data_names, data_names_meas, sorttype, fqcflag)
+            result, outOfGau, PCAT2, PCASPE, good_num = createDiagResu_instance.run(data, _data_names, data_names_meas, sorttype, fqcflag, fault_type)
 
         except Exception:
             print(traceback.format_exc())
@@ -126,4 +131,4 @@ class diagnosisDataApi(Resource):
             return {'result': result, 'outOfGau': outOfGau, 'PCAT2': PCAT2, 'PCASPE': PCASPE}, 202, {'Access-Control-Allow-Origin': '*'}
         return {'result': result, 'outOfGau': outOfGau, 'PCAT2': PCAT2, 'PCASPE': PCASPE}, 200, {'Access-Control-Allow-Origin': '*'}
 
-api.add_resource(diagnosisDataApi, '/v1.0/baogangPlot/diagnosesdata/<upid>/<sorttype>/<limit>')
+api.add_resource(diagnosisDataApi, '/v1.0/baogangPlot/diagnosesdata/<upid>/<sorttype>/<limit>/<fault_type>')

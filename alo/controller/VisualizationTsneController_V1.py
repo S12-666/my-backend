@@ -69,7 +69,7 @@ class getVisualizationTsne_1:
             if item[9] == 0:
                 flags = item[7]
                 if 0 not in flags:
-                    if np.array(flags).sum == 8:
+                    if (np.array(flags).sum == 10) or (len(flags) == 0):
                         label = 404
                     else:
                         label = 1

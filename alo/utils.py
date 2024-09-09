@@ -334,6 +334,8 @@ def sqlselect_bytime(selection, ismissing, tgtwidthSelect, tgtlengthSelect, tgtt
     index=0
     miss=['0','0','0','0','0','0']
     missselect=''
+    left_join_label = ''' from app.deba_dump_data dd 
+                          right join app.deba_dump_properties ddp on ddp.upid = dd.upid '''
     for i in ismissing:
         if(ismissing[i]):
             # selection.append(Process[index])
@@ -369,7 +371,7 @@ def sqlselect_bytime(selection, ismissing, tgtwidthSelect, tgtlengthSelect, tgtt
     else:
         upid=' and ('
         for i in UpidSelect:
-            upid+="upid="+repr(i)+' or '
+            upid+="dd.upid="+repr(i)+' or '
         upid=upid[:-3]
         upid+=')'
     if(len(Platetypes)==0):  #platetype
@@ -394,7 +396,7 @@ def sqlselect_bytime(selection, ismissing, tgtwidthSelect, tgtlengthSelect, tgtt
         if(len(Query[i])!=0):
             Query[i]=Query[i][4:]
             # print(Query[i])
-            SQL="select "+select+" from app.deba_dump_data " +"where"
+            SQL="select "+select+ left_join_label +"where"
             for j in Query:
                 SQL+=j
             SQL+=ASC+Limit
