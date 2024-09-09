@@ -446,7 +446,7 @@ class singelSteel(Resource):
     '''
     singelSteel
     '''
-    def get(self, upid, default):
+    def get(self, upid, fault_type):
         """
         get
         ---
@@ -463,9 +463,9 @@ class singelSteel(Resource):
                 description: 执行成功
         """
         selection = []
-        if (default == 'performance'):
+        if (fault_type == 'performance'):
             selection = ["dd.status_fqc", 'ddp.p_f_label']
-        elif (default == 'thickness'):
+        elif (fault_type == 'thickness'):
             selection = ["dd.status_fqc", 'dd.p_f_label']
         select = ','.join(selection)
 
@@ -516,4 +516,4 @@ class singelSteel(Resource):
         jsondata["label"] = label
         return jsondata, 200, {'Access-Control-Allow-Origin': '*'}
 
-api.add_resource(singelSteel, '/v1.0/model/singelSteel/<upid>/<default>/')
+api.add_resource(singelSteel, '/v1.0/model/singelSteel/<upid>/<fault_type>/')
