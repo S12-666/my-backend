@@ -250,7 +250,7 @@ singleSQL_lefttable = ''' from  dcenter.l2_m_primary_data lmpd
             left join dcenter.l2_m_plate lmp   on lmpd.slabid = lmp.slabid
             left join dcenter.l2_cc_pdi lcp    on lmpd.slabid = lcp.slab_no
             right join app.deba_dump_data dd    on dd.upid = lmp.upid
-            left join  app.deba_dump_properties ddp on ddp.upid = dd.upid'''
+            left join  app.deba_dump_properties ddp on ddp.upid = dd.upid '''
 
 
 def modeldata(parser, selection, startTime, endTime):

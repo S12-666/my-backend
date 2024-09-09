@@ -18,7 +18,7 @@ class VisualizationTsne_1(Resource):
     '''
     SixDpictureUpDownQuantile
     '''
-    def post(self, current_time, limit):
+    def post(self, current_time, limit, fault_type):
         """
         get
         ---
@@ -39,10 +39,17 @@ class VisualizationTsne_1(Resource):
             200:
                 description: 执行成功
         """
+        selection = []
+        if (fault_type == 'performance'):
+            selection = ['ddp.p_data', 'ddp.p_f_label', 'dd.status_fqc']
+        elif (fault_type == 'thickness'):
+            selection = ["dd.status_fqc", 'dd.p_f_label']
+        select = ','.join(selection)
+
         # data, status_cooling = modeldata(parser,['dd.upid', 'lmpd.steelspec','dd.toc', 'dd.tgtwidth','dd.tgtlength','dd.tgtthickness','dd.stats','dd.fqc_label',thicklabel,'dd.status_fqc'], limit)
         data, status_cooling = modeldata_1(parser,
                                         ['dd.upid', 'lmpd.steelspec', 'dd.toc', 'dd.tgtwidth', 'dd.tgtlength', 'dd.tgtthickness',
-                                        'dd.stats', 'dd.fqc_label', thicklabel, 'dd.status_fqc'],
+                                        select, thicklabel],
                                         current_time,
                                         limit)
 
@@ -63,4 +70,4 @@ class VisualizationTsne_1(Resource):
         return json, 200, {'Access-Control-Allow-Origin': '*'}
 
 
-api.add_resource(VisualizationTsne_1, '/v1.0/model/VisualizationTsne_1/<current_time>/<limit>')
+api.add_resource(VisualizationTsne_1, '/v1.0/model/VisualizationTsne_1/<current_time>/<limit>/<fault_type>')
