@@ -17,7 +17,7 @@ import pandas as pd
 def readConfig():
     # f = open('usr/src/config/config.txt')
     # f = open('usr/src/app/config.txt')
-    f = open('config_local.txt')
+    f = open('config_temp.txt')
     for line in f:
         configArr = line.split(' ')
         break

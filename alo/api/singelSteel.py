@@ -30,6 +30,23 @@ data_names = ["charging_temp_act", "tgtplatelength2", "tgtplatethickness2", "tgt
             # "avg_p2",
             "avg_p5", "avg_sct", "max_fct", "max_p1", "max_p2", "max_p5", "max_sct",
             "min_fct", "min_p1", "min_p2", "min_p5", "min_sct", "std_fct", "std_p1", "std_p2", "std_p5", "std_sct"]
+
+p_data_names = [# gs
+                "aus_grain_lvl_b", "aus_grain_lvl_t", "ferr_grain_lvl_b", "ferr_grain_lvl_t",
+                # pa
+                "ts_1_b", "ts_1_t", "ts_2_b", "ts_2_t", "reh_1_b", "reh_1_t", "reh_2_b", "reh_2_t", "rel_1_b", "rel_1_t", "rel_2_b", "rel_2_t", "redu_1_b",
+                "redu_1_t", "redu_2_b", "redu_2_t", "rp02_1_b", "rp02_1_t", "rp02_2_b", "rp02_2_t", "rt05_1_b", "rt05_1_t", "rt05_2_b", "rt05_2_t", "homoel_1_b",
+                "homoel_1_t", "homoel_2_b", "homoel_2_t", "breakel_1_b", "breakel_1_t", "breakel_2_b", "breakel_2_t", "eldrate_1_b", "yieldrate_1_t", "yieldrate_2_b", "yieldrate_2_t",
+                # pf
+                "impact_cut_11_b", "impact_cut_11_t", "impact_cut_12_b", "impact_cut_12_t", "impact_cut_21_b", "impact_cut_21_t", "impact_cut_22_b", "impact_cut_22_t",
+                "impact_temp_1_b", "impact_temp_1_t","impact_temp_2_b","impact_temp_2_t","impact_cut_avg1_b","impact_cut_avg1_t","impact_cut_avg2_b","impact_cut_avg2_t",
+                "impact_energy_11_b","impact_energy_11_t","impact_energy_12_b","impact_energy_12_t","impact_energy_21_b","impact_energy_21_t","impact_energy_22_b","impact_energy_22_t",
+                "impact_energy_avg1_b","impact_energy_avg1_t","impact_energy_avg2_b","impact_energy_avg2_t",
+                # pn
+                "dwtt_1_b", "dwtt_1_t", "dwtt_2_b", "dwtt_2_t", "dwtt_avg_b", "dwtt_avg_t", "dwtt_temp_b", "dwtt_temp_t",
+                # ps
+                "hardness_1_b", "hardness_1_t","hardness_2_b","hardness_2_t","hardness_3_b","hardness_3_t","hardness_avg_b","hardness_avg_t" ]
+
 without_cooling_data_names = ["charging_temp_act", "tgtplatelength2", "tgtplatethickness2", "tgtwidth", "slab_length", "slab_thickness", "slab_weight_act", "slab_width",
             "ave_temp_1", "ave_temp_2", "ave_temp_dis", "ave_temp_pre", "ave_temp_soak", "ave_temp_entry_1", "ave_temp_entry_2", "ave_temp_entry_pre",
             "ave_temp_entry_soak", "center_temp_dis", "center_temp_entry_1", "center_temp_entry_2", "center_temp_entry_pre", "center_temp_entry_soak",

@@ -5,7 +5,7 @@ import pandas as pd
 from flask_restful import Resource, reqparse
 from . import api
 from ..controller.VisualizationTsneController_V1 import getVisualizationTsne_1
-from .singelSteel import modeldata_1,mareymodeldata,thicklabel
+from .singelSteel import modeldata_1,mareymodeldata,thicklabel,p_data_names
 from ..api import singelSteel
 
 parser = reqparse.RequestParser(trim=True, bundle_errors=True)
@@ -41,15 +41,15 @@ class VisualizationTsne_1(Resource):
         """
         selection = []
         if (fault_type == 'performance'):
-            selection = ['ddp.p_data', 'ddp.p_f_label', 'dd.status_fqc']
+            selection = ['ddp.p_f_label', thicklabel, 'dd.status_fqc']
         elif (fault_type == 'thickness'):
-            selection = ["dd.status_fqc", 'dd.p_f_label']
+            selection = ['ddp.p_f_label', thicklabel, 'dd.status_fqc']
         select = ','.join(selection)
 
         # data, status_cooling = modeldata(parser,['dd.upid', 'lmpd.steelspec','dd.toc', 'dd.tgtwidth','dd.tgtlength','dd.tgtthickness','dd.stats','dd.fqc_label',thicklabel,'dd.status_fqc'], limit)
         data, status_cooling = modeldata_1(parser,
                                         ['dd.upid', 'lmpd.steelspec', 'dd.toc', 'dd.tgtwidth', 'dd.tgtlength', 'dd.tgtthickness',
-                                        select, thicklabel],
+                                        'dd.stats', select],
                                         current_time,
                                         limit)
 
