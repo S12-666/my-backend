@@ -20,7 +20,7 @@ class getFlag(Resource):
     '''
     getFlag
     '''
-    def get(self,startTime,endTime):
+    def get(self, startTime, endTime, fault_type):
         """
         get
         ---
@@ -41,18 +41,27 @@ class getFlag(Resource):
             200:
                 description: 执行成功
         """
+        selection = []
+        if (fault_type == 'performance'):
+            selection = 'ddp.p_f_label'
+        elif (fault_type == 'thickness'):
+            selection = 'ddp.p_f_label'
+
         # return {'hello': 'world'}
         tocSelect = [startTime, endTime]
-        data, col_names = new_getData(['upid', 'fqc_label','status_fqc'], {'status_stats':True}, [], [], [], tocSelect, [], [], '', '')
+        data, col_names = new_getData(['dd.upid', selection, 'dd.status_fqc'], {'status_stats':True}, [], [], [], tocSelect, [], [], '', '')
 
         result = {}
         # print(data)
         for item in data:
             label = 0
             if item[2] == 0:
-                flags = item[1]['method1']['data']
-                if np.array(flags).sum() == 5:
-                    label = 1
+                flags = item[1]
+                if 0 not in flags:
+                    if (np.array(flags).sum == 10) or (len(flags) == 0):
+                        label = 404
+                    else:
+                        label = 1
             elif item[2] == 1:
                 label = 404
             result[item[0]] = label
@@ -62,4 +71,4 @@ class getFlag(Resource):
         return result, 200, {'Access-Control-Allow-Origin': '*'}
 
 
-api.add_resource(getFlag, '/v1.0/getFlag/<startTime>/<endTime>/')
+api.add_resource(getFlag, '/v1.0/getFlag/<startTime>/<endTime>/<fault_type>/')

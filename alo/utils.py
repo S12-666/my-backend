@@ -364,7 +364,7 @@ def sqlselect_bytime(selection, ismissing, tgtwidthSelect, tgtlengthSelect, tgtt
     if(len(tocSelect)==0):   #toc
         toc=''
     else:
-        toc=' and toc between '+repr(tocSelect[0])+' and '+repr(tocSelect[1])+' '
+        toc=' and dd.toc between '+repr(tocSelect[0])+' and '+repr(tocSelect[1])+' '
 
     if(len(UpidSelect)==0): #upid
         upid=''
@@ -401,7 +401,7 @@ def sqlselect_bytime(selection, ismissing, tgtwidthSelect, tgtlengthSelect, tgtt
                 SQL+=j
             SQL+=ASC+Limit
             # print(SQL)
-            return SQL + " order by toc"
+            return SQL + " order by dd.toc"
     return "select "+select+" from app.deba_dump_data "+ASC+Limit + " order by toc"
 
 

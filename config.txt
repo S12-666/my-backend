@@ -1,1 +1,1 @@
-BSData20190712 postgres woshimima 172.20.110.123 5432
+BSData202107 postgres woshimima 172.29.175.6 5432
