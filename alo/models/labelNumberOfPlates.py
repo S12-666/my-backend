@@ -6,7 +6,6 @@ def getLabelData(start, end, type):
     right_tabel = ''
 
     if (type == 'performance'):
-
         label = 'ddp.p_f_label'
         status = 'dd.status_fqc'
         right_tabel = ''' app.deba_dump_data dd
