@@ -1,14 +1,17 @@
 import numpy as np
 import pandas as pd
 from .define import data_names, without_cooling_data_names
-def getFqcList(fqc_label):
-    return fqc_label['method1']['data'] if fqc_label else []
-def plateHasDefect(status: int, fqc_label: dict) -> int:
+def getpfList(p_f_label):
+    return p_f_label if p_f_label else []
+def plateHasDefect(status: int, p_f_label: dict) -> int:
     if status == 1:
         return 404
-    label = getFqcList(fqc_label)
-    if np.array(label).sum() == 5:
-        return 1
+    label = getpfList(p_f_label)
+    if 0 not in label:
+        if (np.array(label).sum() == 10) or (len(label) == 0):
+            return 404
+        else:
+            return 1
     else:
         return 0
 def plateDetailedDefect(status: int, fqc_label: dict, idx: int) -> int:
