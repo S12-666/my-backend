@@ -512,7 +512,10 @@ class singelSteel(Resource):
         elif jsondata[0][-2] == 0: # 有性能检测标签
             jsondata = list(jsondata[0])
             if 0 not in jsondata[-1]: # 判断是否存在0
-                label = 1
+                if (np.array(jsondata[-1]).sum() == 10) or (len(jsondata[-1]) ==0):
+                    label = 404
+                else:
+                    label = 1
         jsondata[4] = str(jsondata[4])
         jsondata = dict(zip(col_names, jsondata))
         jsondata["label"] = label
