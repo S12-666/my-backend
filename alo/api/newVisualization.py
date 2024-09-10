@@ -161,26 +161,26 @@ class newVisualization(Resource):
                 jsondata[name[m]]=percentile(coolKate, sampletemp, deviation, limit)
                 sampleposition_p = np.abs(np.array(sampleposition)) / sampleposition[-1] * 100
                 jsondata[name[m]]['position'] = sampleposition_p.tolist()
-            # 二维温度场
-            name1="Scanner"
-            coolKate=[]
-            sampletemp=[]
-            nameindex1=len(sampledata.iloc[0,:].values[0]['scanner']['data'][0])
-            sampletemp = np.array(sampledata.iloc[0,:].values[0]['scanner']['data']).T.mean(axis=1)
-            sampleposition = np.array(sampledata.iloc[0, :].values[0]['scanner']['position'])#.mean(axis=1)
-            for i in range(len1):
-                # print(i)
-                cooltemp=np.array(data.iloc[i,:].values[0]['scanner']['data']).T.mean(axis=1)
-                cooltemp=list(cooltemp)
-                # if(len(cooltemp)>nameindex1+coolright):continue
-                # if(len(cooltemp)<nameindex1-coolleft):continue
-                while(len(cooltemp)!=nameindex1):  #冷却插值
-                    cooltemp=scipyutils(nameindex1,cooltemp)
-                coolKate.append(cooltemp)
-            # if (len(coolKate) == 0): continue
-            coolKate=np.array(coolKate)
-            jsondata[name1]=percentile(coolKate, sampletemp, deviation, limit)
-            jsondata[name1]['position'] = (np.abs(np.array(sampleposition)) / sampleposition[-1] * 100).tolist()
+            # 二维温度场 同规格诊断
+            # name1="Scanner"
+            # coolKate=[]
+            # sampletemp=[]
+            # nameindex1=len(sampledata.iloc[0,:].values[0]['scanner']['data'][0])
+            # sampletemp = np.array(sampledata.iloc[0,:].values[0]['scanner']['data']).T.mean(axis=1)
+            # sampleposition = np.array(sampledata.iloc[0, :].values[0]['scanner']['position'])#.mean(axis=1)
+            # for i in range(len1):
+            #     # print(i)
+            #     cooltemp=np.array(data.iloc[i,:].values[0]['scanner']['data']).T.mean(axis=1)
+            #     cooltemp=list(cooltemp)
+            #     # if(len(cooltemp)>nameindex1+coolright):continue
+            #     # if(len(cooltemp)<nameindex1-coolleft):continue
+            #     while(len(cooltemp)!=nameindex1):  #冷却插值
+            #         cooltemp=scipyutils(nameindex1,cooltemp)
+            #     coolKate.append(cooltemp)
+            # # if (len(coolKate) == 0): continue
+            # coolKate=np.array(coolKate)
+            # jsondata[name1]=percentile(coolKate, sampletemp, deviation, limit)
+            # jsondata[name1]['position'] = (np.abs(np.array(sampleposition)) / sampleposition[-1] * 100).tolist()
 
 
         if (process=='heat'):
