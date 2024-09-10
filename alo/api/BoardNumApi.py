@@ -17,7 +17,7 @@ class BoardNumApi(Resource):
         computeBoardNum_instance = ComputeBoardNum(upid)
 
         selection = []
-        if fault_type == 'perfromance':
+        if fault_type == 'performance':
             selection = ['dd.upid', 'dd.status_fqc', 'ddp.p_f_label']
         elif fault_type == 'thickness':
             selection  = ['dd.upid', 'dd.status_fqc', 'ddp.p_f_label']
