@@ -6,28 +6,30 @@ from ..methods.DiagnosesAlgorithm import DiagnosesAlgorithm
 import time
 class DiagnosesDataByUpidsController:
     def __init__(self, args):
-        self.upids = args['upids']
         self.args = {
             'tgtwidth': args['tgtwidth'],
             'tgtplatelength2': args['tgtplatelength2'],
             'tgtthickness': args['tgtthickness'],
             'tgtdischargetemp': args['tgtdischargetemp'],
-            'tgttmplatetemp': args['tgttmplatetemp']
+            'tgttmplatetemp': args['tgttmplatetemp'],
+            'fault_type': args['fault_type'],
+            'upids': args['upids']
         }
+        self.fault_type = args['fault_type']
         self.train = None
         self.test = None
     def run(self):
         start_time = time.perf_counter()
         train_raw, train_col = diagnosesTrainDataByArgs(self.args)
         train_df = pd.DataFrame(data=train_raw, columns=train_col)
-        test_raw, test_col = diagnosesTestDataByUpid(self.upids)
+        test_raw, test_col = diagnosesTestDataByUpid(self.args)
         test_df = pd.DataFrame(data=test_raw, columns=test_col)
         test_df.toc = test_df.apply(lambda x: x.toc.strftime("%Y-%m-%d %H:%M:%S"), axis=1)
         print(f'查询: {time.perf_counter() - start_time:.8f} s')
         if len(train_raw) == 0:
             return 'no train data', {}
         self.train = []
-        train_df['label'] = train_df[['status_fqc', 'fqc_label']].apply(lambda x: plateHasDefect(x['status_fqc'], x['fqc_label']), axis=1)
+        train_df['label'] = train_df[['status_fqc', 'p_f_label']].apply(lambda x: plateHasDefect(x['status_fqc'], x['p_f_label']), axis=1)
         feature_df = train_df[train_df['label'] == 1][['platetype'] + specifications]
         grouped_feature_df = feature_df.groupby(['platetype'])
         quatile_df_1 = grouped_feature_df[specifications].quantile(0.25)
@@ -45,7 +47,7 @@ class DiagnosesDataByUpidsController:
                     temp[name] = [0, 0]
             platetype_range[key] = temp
         for idx, flag in enumerate(flag_names):
-            train_df[flag] = train_df[['status_fqc', 'fqc_label']].apply(lambda x: plateDetailedDefect(x['status_fqc'], x['fqc_label'], idx), axis=1)
+            train_df[flag] = train_df[['status_fqc', 'p_f_label']].apply(lambda x: plateDetailedDefect(x['status_fqc'], x['p_f_label'], idx), axis=1)
             good_train_df = train_df[train_df[flag] == 1]
             data_matrix, _ = rawDataToModelData(good_train_df)
             self.train.append(data_matrix)

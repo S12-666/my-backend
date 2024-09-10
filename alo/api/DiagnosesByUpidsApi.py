@@ -7,7 +7,7 @@ from . import api
 
 parser = reqparse.RequestParser(trim=True, bundle_errors=True)
 class GetDiagnosesDataByUpidsApi(Resource):
-    def post(self):
+    def post(self, fault_type):
 
         try:
             args = getArgsFromParser(parser, specifications + ['upids'])
@@ -15,6 +15,7 @@ class GetDiagnosesDataByUpidsApi(Resource):
             para = {}
             for key in args:
                 para[key] = json.loads(args[key])
+            para['fault_type'] = fault_type
         except:
             return response_wrapper({}, 2)
 
@@ -34,4 +35,4 @@ class GetDiagnosesDataByUpidsApi(Resource):
             print(e)
             return response_wrapper({}, 5)
 
-api.add_resource(GetDiagnosesDataByUpidsApi, '/v1.0/visualization/getDiagnosesDataByUpids')
+api.add_resource(GetDiagnosesDataByUpidsApi, '/v1.0/visualization/getDiagnosesDataByUpids/<fault_type>')
