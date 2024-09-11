@@ -14,7 +14,7 @@ class VisualizationMDS(Resource):
     '''
     VisualizationMDS
     '''
-    def post(self, current_time, limit):
+    def post(self, current_time, limit, fault_type):
         """
         get
         ---
@@ -35,9 +35,16 @@ class VisualizationMDS(Resource):
             200:
                 description: 执行成功
         """
+        selection = []
+        if (fault_type == 'performance'):
+            selection = ['ddp.p_f_label', thicklabel, 'dd.status_fqc']
+        elif (fault_type == 'thickness'):
+            selection = ['ddp.p_f_label', thicklabel, 'dd.status_fqc']
+        select = ','.join(selection)
+
         data, status_cooling = modeldata_1(parser,
                                          ['dd.upid', 'lmpd.steelspec','dd.toc', 'dd.tgtwidth','dd.tgtlength','dd.tgtthickness',
-                                          'dd.stats','dd.fqc_label',thicklabel,'dd.status_fqc'],
+                                          'dd.stats', select],
                                          current_time,
                                          limit)
         # marey_data, col_names = mareymodeldata(start_time, end_time, parser,['dd.upid', 'lmpd.steelspec','dd.toc', 'dd.tgtwidth','dd.tgtlength','dd.tgtthickness','dd.stats','dd.fqc_label',thicklabel,'dd.status_fqc'], status_cooling)
@@ -61,4 +68,4 @@ class VisualizationMDS(Resource):
         return json, 200, {'Access-Control-Allow-Origin': '*'}
 
 
-api.add_resource(VisualizationMDS, '/v1.0/model/VisualizationMDS/<current_time>/<limit>')
+api.add_resource(VisualizationMDS, '/v1.0/model/VisualizationMDS/<current_time>/<limit>/<fault_type>')
