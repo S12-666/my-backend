@@ -14,12 +14,14 @@ def plateHasDefect(status: int, p_f_label: dict) -> int:
             return 1
     else:
         return 0
-def plateDetailedDefect(status: int, fqc_label: dict, idx: int) -> int:
+def plateDetailedDefect(status: int, p_f_label: list, idx: int) -> int:
     if status == 1:
         return 404
     else:
-        label = getFqcList(fqc_label)
-        return label[idx]
+        if 0 not in p_f_label:
+            if (np.array(p_f_label).sum() == 10) or (len(p_f_label) == 0):
+                return 404
+        return p_f_label[idx]
 def fillListTail(data: list, length: int, fill=0) -> list:
     if len(data) >= length:
         return data
@@ -32,10 +34,10 @@ def rawDataToModelData(data_df):
         status_cooling = row['status_cooling']
         if status_cooling == 0:
             iter_names = data_names
-            labels = getFqcList(row['fqc_label'])
+            labels = getpfList(row['p_f_label'])
         else:
             iter_names = without_cooling_data_names
-            labels = getFqcList(row['fqc_label'])
+            labels = getpfList(row['p_f_label'])
         item_data = []
         for name in iter_names:
             try:

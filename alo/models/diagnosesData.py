@@ -77,6 +77,7 @@ def diagnosesTrainDataByArgs(args):
             {range_str}
             and dd.status_stats = 0
             and dd.status_fqc = 0
+            and ddp.p_f_label != '[]'
          order by dd.toc desc
          limit {limit};
     """.format(range_str=range_str, limit=1000)

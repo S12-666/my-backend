@@ -36,7 +36,7 @@ data_names_meas = [
     "meas_temp_17", "meas_temp_18", "meas_temp_19", "meas_temp_2", "meas_temp_3", "meas_temp_4", "meas_temp_5", "meas_temp_6", "meas_temp_7",
     "meas_temp_8", "meas_temp_9"
 ]
-flag_names = ["bend", "abnormalThickness", "horizonWave", "leftWave", "rightWave"]
+flag_names = ["pa", "pf", "pn", "ps", "gs"]
 def meas_index():
     i1 = data_names.index(data_names_meas[0])
     i2 = data_names.index(data_names_meas[-1])
