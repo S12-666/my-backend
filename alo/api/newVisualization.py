@@ -51,7 +51,7 @@ class newVisualization(Resource):
         if (fault_type == 'performance'):
             newselection = 'ddp.p_f_label'
         elif (fault_type == 'thickness'):
-            newselection = 'ddp.p_f_label'
+            newselection = 'thickness_label'
 
         SQL, status_cooling, fqcflag = new_filterSQL(parser)
         deviation= 100 * float(deviation)
@@ -66,11 +66,6 @@ class newVisualization(Resource):
             # f2=interp1d(x_diff,y,kind='cubic')#三次样条插值
             return f1(x)
         def percentile(indexData, sampleData, middeviation, exdeviation):
-            # aaa = np.array(sampleData).reshape(1,len(sampledata))
-            # range_array = np.vstack((indexData, aaa))
-            # print(len(indexData))
-            # print(len(indexData[0]))
-            # print(len(sampleData))
             indexData = np.append(indexData,np.array(sampleData).reshape(1,len(sampleData)), axis=0)
             steel = {"min": list(np.percentile(indexData, middeviation, axis=0)),
                  "max": list(np.percentile(indexData, 100 - middeviation, axis=0)),
@@ -343,7 +338,7 @@ class RollingPassStatisticsApi(Resource):
         rollingPass_instance = RollingPassStatistics()
         data, columns = rollingPass_instance.getData(parser, selection, lefttable, ismissing, limitation)
 
-        status_code, result = rollingPass_instance.getRollingPassStatistics(data)
+        status_code, result = rollingPass_instance.getRollingPassStatistics(data, columns, fault_type)
 
         return result, status_code, {'Access-Control-Allow-Origin': '*'}
 
