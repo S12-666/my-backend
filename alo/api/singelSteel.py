@@ -6,7 +6,7 @@ from flask import json
 from . import api
 import pandas as pd
 import numpy as np
-from ..utils import getSQLData,getFlagArr,getLabelData,getLabel,ref
+from ..utils import getLabelData
 import json
 import re
 
