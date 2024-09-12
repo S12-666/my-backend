@@ -6,7 +6,7 @@ from flask import json
 from . import api
 import pandas as pd
 import numpy as np
-from ..utils import getLabelData
+from ..utils import getLabelData, label_flag_judge
 import json
 import re
 
@@ -505,17 +505,10 @@ class singelSteel(Resource):
         if len(jsondata) == 0:
             return '', 204, {'Access-Control-Allow-Origin': '*'}
 
-        label = 0
-        if jsondata[0][-2] == 1:
-            label = 404
-            jsondata = list(jsondata[0])
-        elif jsondata[0][-2] == 0: # 有性能检测标签
-            jsondata = list(jsondata[0])
-            if 0 not in jsondata[-1]: # 判断是否存在0
-                if (np.array(jsondata[-1]).sum() == 10) or (len(jsondata[-1]) ==0):
-                    label = 404
-                else:
-                    label = 1
+        jsondata_df = pd.DataFrame(data=jsondata, columns=col_names)
+        label = label_flag_judge(jsondata_df, fault_type)
+
+        jsondata = list(jsondata[0])
         jsondata[4] = str(jsondata[4])
         jsondata = dict(zip(col_names, jsondata))
         jsondata["label"] = label

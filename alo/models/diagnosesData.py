@@ -1,24 +1,4 @@
 from ..utils import queryDataFromDatabase
-selection_sql1 = """
-    SELECT DD.UPID,
-        DD.PLATETYPE,
-        DD.TGTWIDTH as tgtwidth,
-        DD.TGTLENGTH as tgtthickness,
-        DD.TGTTHICKNESS as tgtplatelength2,
-        LMPD.TGTDISCHARGETEMP as tgtdischargetemp,
-        LMPD.TGTTMPLATETEMP as tgttmplatetemp,
-        DD.STATS,
-        DD.FQC_LABEL,
-        DD.TOC,
-        DD.STATUS_STATS,
-        DD.STATUS_FQC,
-        DD.STATUS_COOLING
-    FROM APP.DEBA_DUMP_DATA DD
-        LEFT JOIN DCENTER.L2_M_PLATE LMP ON DD.UPID = LMP.UPID
-	    LEFT JOIN DCENTER.L2_M_PRIMARY_DATA LMPD ON LMPD.SLABID = LMP.SLABID
-"""
-
-
 
 def sql_selection(type):
     label_selection = []
@@ -83,23 +63,6 @@ def diagnosesTrainDataByArgs(args):
     """.format(range_str=range_str, limit=1000)
 
     type = args['fault_type']
-
-    # label_selection = []
-    # table_selection = ''
-    # if args['fault_type'] == 'performance':
-    #     label_selection = ['ddp.p_f_label', 'dd.status_fqc']
-    #     table_selection = ''' from   app.deba_dump_data dd
-    #                         left join dcenter.l2_m_plate lmp on dd.upid = lmp.upid
-    #                         left join dcenter.l2_m_primary_data lmpd on lmpd.slabid = lmp.slabid
-    #                         right join app.deba_dump_properties ddp on ddp.upid = dd.upid '''
-    # elif args['fault_type'] == 'performance':
-    #     label_selection = ['ddp.p_f_label', 'dd.status_fqc']
-    #     table_selection = ''' from   app.deba_dump_data dd
-    #                                 left join dcenter.l2_m_plate lmp on dd.upid = lmp.upid
-    #                                 left join dcenter.l2_m_primary_data lmpd on lmpd.slabid = lmp.slabid
-    #                                 right join app.deba_dump_properties ddp on ddp.upid = dd.upid '''
-    #
-    # label_selection = ','.join(label_selection)
 
     selection_sql, label_selection, table_selection = sql_selection(type)
 

@@ -13,14 +13,8 @@ api = Api(api_blueprint)
 
 fpika = FPika()
 
-# from . import demo
-# from . import modelTransferControllerApi
-# from . import modelTransferCsvApi
 from . import plateYieldStaisticsApi
-# from . import Temperature2DAndFqcApi
-# from . import VisualizationMaretoApi
 from . import diagnosisDataApi
-# from . import detailProcessApi
 from . import VisualizationTsneApi
 from . import VisualizationTsneApi_V1
 from . import VisualizationPCAApi

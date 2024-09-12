@@ -1,4 +1,6 @@
 import re
+
+import numpy as np
 import psycopg2
 import pandas as pd
 
@@ -496,3 +498,37 @@ def response_wrapper(res, code=0, msg=''):
 
 def format_value(val: float, s: str = '.4f') -> float:
     return float(format(val, s))
+
+
+def label_flag_judge(data, type):
+    # self.type = type,
+    # self.data = data,
+    status = ''
+    label_judge = []
+    if type == 'performance':
+        status = int(data['status_fqc'])
+        label_judge = data['p_f_label'].iloc[0]
+        label = 0
+        if status == 1:
+            label = 404
+        elif status == 0:
+            if 0 not in label_judge:
+                if (np.array(label_judge).sum() == 10) or (len(label_judge) == 0):
+                    label = 404
+                else:
+                    label = 1
+    elif type == 'thickness':
+        status = int(data['t_flag'])
+        label_judge = data['t_label'].iloc[0]
+        label = 0
+        if status == 1:
+            label = 404
+        elif status == 0:
+            if 0 not in label_judge:
+                if (np.array(label_judge).sum() == 6) or (len(label_judge) == 0):
+                    label = 404
+                else:
+                    label = 1
+    return label
+
+
