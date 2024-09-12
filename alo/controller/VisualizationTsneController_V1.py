@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import datetime as dt
 from sklearn.manifold import TSNE
+from ..utils import label_flag_judge
 class getVisualizationTsne_1:
     '''
     getVisualizationTsne
@@ -16,7 +17,7 @@ class getVisualizationTsne_1:
         pass
         # print('生成实例')
 
-    def run(self, data, data_names):
+    def run(self, data, data_names, col_names, fault_type):
         # read data from database which has character:
         # toc，upid，productcategory，tgtplatelength2，tgtplatethickness2，tgtwidth，ave_temp_dis，
         # crowntotal，nmrPre_params，wedgetotal，finishtemptotal，avg_p5
@@ -65,16 +66,8 @@ class getVisualizationTsne_1:
         index=0
         upload_json={}
         for item in data:
-            label = 0
-            if item[9] == 0:
-                flags = item[7]
-                if 0 not in flags:
-                    if (np.array(flags).sum == 10) or (len(flags) == 0):
-                        label = 404
-                    else:
-                        label = 1
-            elif item[9] == 1:
-                label = 404
+            item_df = pd.DataFrame(data = [item], columns = col_names)
+            label = label_flag_judge(item_df, fault_type)
             upload_json[str(index)] = {"x":X_embedded[index][0].item(),
             "y":X_embedded[index][1].item(),
             "toc":str(item[2]),

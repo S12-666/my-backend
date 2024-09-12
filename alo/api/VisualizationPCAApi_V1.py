@@ -46,7 +46,7 @@ class VisualizationPCA_1(Resource):
             selection = ['ddp.p_f_label', thicklabel, 'dd.status_fqc']
         select = ','.join(selection)
 
-        data, status_cooling = modeldata_1(parser,
+        data, status_cooling, col_names= modeldata_1(parser,
                                          ['dd.upid', 'lmpd.steelspec', 'dd.toc', 'dd.tgtwidth', 'dd.tgtlength', 'dd.tgtthickness',
                                           'dd.stats', select],
                                          current_time,
@@ -68,7 +68,7 @@ class VisualizationPCA_1(Resource):
         elif status_cooling == 1:
             data_names = singelSteel.without_cooling_data_names
         VisualizationPCAdata = getVisualizationPCA_1()
-        jsondata = VisualizationPCAdata.run(data, data_names)
+        jsondata = VisualizationPCAdata.run(data, data_names, col_names, fault_type)
 
         if len(jsondata) < 5:
             return jsondata, 202, {'Access-Control-Allow-Origin': '*'}

@@ -42,7 +42,7 @@ class VisualizationMDS(Resource):
             selection = ['ddp.p_f_label', thicklabel, 'dd.status_fqc']
         select = ','.join(selection)
 
-        data, status_cooling = modeldata_1(parser,
+        data, status_cooling, col_names = modeldata_1(parser,
                                          ['dd.upid', 'lmpd.steelspec','dd.toc', 'dd.tgtwidth','dd.tgtlength','dd.tgtthickness',
                                           'dd.stats', select],
                                          current_time,
@@ -61,7 +61,7 @@ class VisualizationMDS(Resource):
         elif status_cooling == 1:
             data_names = singelSteel.without_cooling_data_names
         VisualizationMDS = getVisualizationMDS()
-        json = VisualizationMDS.run(data, data_names)
+        json = VisualizationMDS.run(data, data_names, col_names, fault_type)
 
         if len(json) < 5:
             return json, 202, {'Access-Control-Allow-Origin': '*'}

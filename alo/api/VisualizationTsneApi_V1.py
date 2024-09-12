@@ -47,7 +47,7 @@ class VisualizationTsne_1(Resource):
         select = ','.join(selection)
 
         # data, status_cooling = modeldata(parser,['dd.upid', 'lmpd.steelspec','dd.toc', 'dd.tgtwidth','dd.tgtlength','dd.tgtthickness','dd.stats','dd.fqc_label',thicklabel,'dd.status_fqc'], limit)
-        data, status_cooling = modeldata_1(parser,
+        data, status_cooling, col_names = modeldata_1(parser,
                                         ['dd.upid', 'lmpd.steelspec', 'dd.toc', 'dd.tgtwidth', 'dd.tgtlength', 'dd.tgtthickness',
                                         'dd.stats', select],
                                         current_time,
@@ -63,7 +63,7 @@ class VisualizationTsne_1(Resource):
             data_names = singelSteel.data_names
         elif status_cooling == 1:
             data_names = singelSteel.without_cooling_data_names
-        json = VisualizationTsne.run(data, data_names)
+        json = VisualizationTsne.run(data, data_names, col_names, fault_type)
 
         if len(json) < 5:
             return json, 202, {'Access-Control-Allow-Origin': '*'}

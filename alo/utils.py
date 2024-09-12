@@ -501,8 +501,6 @@ def format_value(val: float, s: str = '.4f') -> float:
 
 
 def label_flag_judge(data, type):
-    # self.type = type,
-    # self.data = data,
     status = ''
     label_judge = []
     if type == 'performance':

@@ -9,6 +9,7 @@ import pandas as pd
 from ..utils import getData,new_getData
 from ..utils import getFlagArr
 from ..utils import ref
+from ..utils import label_flag_judge
 
 parser = reqparse.RequestParser(trim=True, bundle_errors=True)
 
@@ -54,19 +55,9 @@ class getFlag(Resource):
         result = {}
         # print(data)
         for item in data:
-            label = 0
-            if item[2] == 0:
-                flags = item[1]
-                if 0 not in flags:
-                    if (np.array(flags).sum == 10) or (len(flags) == 0):
-                        label = 404
-                    else:
-                        label = 1
-            elif item[2] == 1:
-                label = 404
+            item_df = pd.DataFrame(data=[item], columns=col_names)
+            label = label_flag_judge(item_df, fault_type)
             result[item[0]] = label
-
-        # print(json)
 
         return result, 200, {'Access-Control-Allow-Origin': '*'}
 

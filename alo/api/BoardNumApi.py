@@ -22,10 +22,10 @@ class BoardNumApi(Resource):
         elif fault_type == 'thickness':
             selection  = ['dd.upid', 'dd.status_fqc', 'ddp.p_f_label']
 
-        data = computeBoardNum_instance.getData(parser, selection, limit)
+        data, col_names = computeBoardNum_instance.getData(parser, selection, limit)
 
         try:
-            status_code, result = computeBoardNum_instance.getGoodNum(data)
+            status_code, result = computeBoardNum_instance.getGoodNum(data, col_names, fault_type)
         except Exception:
             print(traceback.format_exc())
         # if (result == 400):

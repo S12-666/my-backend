@@ -88,14 +88,15 @@ class diagnosisDataApi(Resource):
         # platetype=json.loads(args["platetype"])
         selection = []
         if (fault_type == 'performance'):
-            selection = 'ddp.p_f_label'
+            selection = ['ddp.p_f_label', 'status_fqc']
         elif (fault_type == 'thickness'):
-            selection = 'ddp.p_f_label'
+            selection = ['ddp.p_f_label', 'status_fqc']
 
+        select = ','.join(selection)
 
-        data, _, status_cooling, fqcflag = new_modeldata(parser,
+        data, col_names, status_cooling, fqcflag = new_modeldata(parser,
                                                 ['dd.upid', 'lmpd.productcategory', 'dd.tgtwidth','dd.tgtlength',
-                                                 'dd.tgtthickness','dd.stats', selection, 'dd.toc'],
+                                                 'dd.tgtthickness','dd.stats', select, 'dd.toc'],
                                                 limit)
 
         # print(len(data))

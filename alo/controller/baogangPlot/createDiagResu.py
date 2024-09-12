@@ -7,10 +7,9 @@ import numpy as np
 from sklearn import preprocessing
 from scipy.stats import f
 from scipy.stats import norm
-from ...utils import new_getData
+from ...utils import new_getData, label_flag_judge
 import copy
 import datetime
-
 
 class PCATEST:
 
@@ -218,11 +217,13 @@ class createDiagResu:
         # print(self.upid)
         selection = []
         if (fault_type == 'performance'):
-            selection = 'ddp.p_f_label'
+            selection = ['ddp.p_f_label', 'status_fqc']
         elif (fault_type == 'thickness'):
-            selection = 'ddp.p_f_label'
+            selection = ['ddp.p_f_label', 'status_fqc']
+
+        select = ','.join(selection)
         ismissing = {'status_stats':True}
-        data,columns = new_getData(['dd.upid', 'dd.platetype', 'dd.tgtwidth','dd.tgtlength','dd.tgtthickness','dd.stats', selection, 'dd.toc'], ismissing, [], [], [], [], [self.upid], [], '', '')
+        data,columns = new_getData(['dd.upid', 'dd.platetype', 'dd.tgtwidth','dd.tgtlength','dd.tgtthickness','dd.stats', select, 'dd.toc'], ismissing, [], [], [], [], [self.upid], [], '', '')
         data_df = pd.DataFrame(data=data, columns=columns).dropna(axis=0, how='any').reset_index(drop=True)
         if len(data_df) == 0:
             return 400, 400, 400, 400
@@ -240,13 +241,8 @@ class createDiagResu:
 
         if fqcflag == 0:
             for item in otherData:
-                flags = item[6]
-                label = 0
-                if 0 not in flags:
-                    if (np.array(flags).sum() == 10) or (len(flags) == 0):
-                        label = 404
-                    else:
-                        label = 1
+                item_df = pd.DataFrame(data=[item], columns=columns)
+                label = label_flag_judge(item_df, fault_type)
                 labelArr.append(label)
 
                 item_data = []

@@ -318,7 +318,7 @@ def  modeldata_1(parser, selection, current_time, limit):
     SQL = 'select ' + select + singleSQL_lefttable + SQL + Limit
     # print(SQL)
     data,col_names = getLabelData(SQL)
-    return data, status_cooling
+    return data, status_cooling, col_names
 
 def cate_modeldata(parser, selection, Limit):
     SQL, status_cooling = filterSQL(parser)
