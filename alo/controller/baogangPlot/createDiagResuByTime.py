@@ -300,7 +300,7 @@ class createDiagResu:
             'status_cooling': True if status_cooling == 0 else False,
             'status_fqc': True if fqcflag == 0 else False
         }
-        data, columns = getData_bytime(['upid', 'platetype', 'tgtwidth', 'tgtlength', 'tgtthickness', 'stats', 'fqc_label', 'toc'],
+        data, columns = getData_bytime(['dd.upid', 'dd.platetype', 'dd.tgtwidth', 'dd.tgtlength', 'dd.tgtthickness', 'dd.stats', 'dd.fqc_label', 'dd.toc'],
                                        ismissing, [], [], [],
                                        [self.start_time, self.end_time],
                                        [], [], '', '')

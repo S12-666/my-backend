@@ -312,7 +312,7 @@ class createMonitorResu:
             ismissing = {'status_stats': True,
                          'status_cooling': True if status_cooling == 0 else False,
                          'status_fqc': True if fqcflag == 0 else False}
-            data, columns = getData_bytime(['upid', 'platetype', 'tgtwidth', 'tgtlength', 'tgtthickness', 'stats', 'fqc_label', 'toc'],
+            data, columns = getData_bytime(['dd.upid', 'dd.platetype', 'dd.tgtwidth', 'dd.tgtlength', 'dd.tgtthickness', 'dd.stats', 'dd.fqc_label', 'dd.toc'],
                                            ismissing, [], [], [],
                                            tocs[index], [], [], '', '')
             data_df = pd.DataFrame(data=data, columns=columns).dropna(axis=0, how='any').reset_index(drop=True)
@@ -478,7 +478,7 @@ class createMonitorResu:
         selection = ['dd.upid', 'lmpd.productcategory', 'dd.tgtwidth', 'dd.tgtlength', 'dd.tgtthickness', 'dd.stats', 'dd.fqc_label', 'dd.toc', 'dd.status_cooling']
         noCooling_otherdata, hasCooling_otherdata = self.getNoBatchOtherData(request_bodys, selection, limit)
         ismissing = {'status_stats': True, 'status_fqc': True}
-        data, columns = getData_bytime(['upid', 'platetype', 'tgtwidth', 'tgtlength', 'tgtthickness', 'stats', 'fqc_label', 'toc', 'status_cooling'],
+        data, columns = getData_bytime(['dd.upid', 'dd.platetype', 'dd.tgtwidth', 'dd.tgtlength', 'dd.tgtthickness', 'dd.stats', 'dd.fqc_label', 'dd.toc', 'dd.status_cooling'],
                                        ismissing, [], [], [],
                                        [self.start_time, self.end_time], [], [], '', '')
         noCooling_data, hasCooling_data = [], []

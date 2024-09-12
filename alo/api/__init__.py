@@ -33,7 +33,6 @@ from . import Visualization
 from . import newVisualization
 from . import VisualizationCorrelation
 from . import VisualizationPlatetypes
-from . import Platetypes
 from . import singelSteel
 from . import getMareyDataApi
 from . import BoardNumApi
@@ -42,7 +41,6 @@ from . import diagnosisDataByTimeApi
 from . import monitorDataByTimeApi
 from . import newVisualizationByBatch
 from . import getEventDataApi
-# from . import modelPredictCsvAllFlagApi
 from . import GetNumberOfPlatesByTimeApi
 from . import GetScatterDataByTimeApi
 from . import DiagnosesByUpidsApi

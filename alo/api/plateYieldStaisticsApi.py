@@ -62,7 +62,7 @@ class plateYieldStaistics(Resource):
         tocSelect = [startTime, endTime]
         # ismissing={'all_processes_statistics_ismissing':True,'cool_ismissing':True,'fu_temperature_ismissing':True,'m_ismissing':True,'fqc_ismissing':True}
         ismissing = {}
-        data = new_getData(['upid', 'toc', 'status_fqc', 'fqc_label'], ismissing, [], [], [], tocSelect, [], [], '', '')
+        data = new_getData(['dd.upid', 'dd.toc', 'dd.status_fqc', 'dd.fqc_label'], ismissing, [], [], [], tocSelect, [], [], '', '')
         month_data = {
           'toc': [],
           'upid': [],
