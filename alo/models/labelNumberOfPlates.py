@@ -1,5 +1,5 @@
 from ..utils import queryDataFromDatabase
-def getLabelData(start, end, type):
+def getLabelData_4(start, end, type):
 
     label = ''
     status = ''

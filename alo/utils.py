@@ -3,19 +3,8 @@ import re
 import numpy as np
 import psycopg2
 import pandas as pd
+# from .api.singelSteel import data_names,without_cooling_data_names,data_names_meas
 
-
-
-# selection=[]
-# ismissing={'all_processes_statistics_ismissing':True,'cool_ismissing':True,'fu_temperature_ismissing':True,'m_ismissing':True,'fqc_ismissing':True}   
-# tgtwidthSelect=['2.895','4.48']
-# tgtlengthSelect=['16.137','40.382']
-# tgtthicknessSelect=['0.0102','0.0232']
-# tocSelect=['2018-12-01 01:41:43','2018-12-10 12:11:43']
-# UpidSelect=['18C01025000','18C01032000'];
-# Platetypes=['KA36-TM','AB/A'];
-# AscOption='toc'
-# Limition='100';
 def readConfig():
     # f = open('usr/src/config/config.txt')
     # f = open('usr/src/app/config.txt')
@@ -529,4 +518,108 @@ def label_flag_judge(data, type):
                     label = 1
     return label
 
+def getLabelData_4(start, end, type):
 
+    label = ''
+    status = ''
+    right_tabel = ''
+
+    if (type == 'performance'):
+        label = 'ddp.p_f_label'
+        status = 'dd.status_fqc'
+        right_tabel = ''' app.deba_dump_data dd
+                          right join app.deba_dump_properties ddp ON ddp.upid = dd.upid '''
+    elif (type == 'thickness'):
+        label = 't_label'
+        status = 'status_fqc'
+
+    select = 'select dd.toc,' + label + ',' + status
+    tabel = '\nfrom ' + right_tabel
+    sql = select + tabel + "\nwhere dd.toc between '" + start + "' and '" + end + "' " + 'order by dd.toc '
+    data, columns = queryDataFromDatabase(sql)
+    return data, columns
+
+def getpfList(p_f_label):
+    return p_f_label if p_f_label else []
+def plateHasDefect(status: int, p_f_label: dict) -> int:
+    if status == 1:
+        return 404
+    label = getpfList(p_f_label)
+    if 0 not in label:
+        if (np.array(label).sum() == 10) or (len(label) == 0):
+            return 404
+        else:
+            return 1
+    else:
+        return 0
+def plateDetailedDefect(status: int, p_f_label: list, idx: int) -> int:
+    if status == 1:
+        return 404
+    else:
+        if 0 not in p_f_label:
+            if (np.array(p_f_label).sum() == 10) or (len(p_f_label) == 0):
+                return 404
+        return p_f_label[idx]
+def fillListTail(data: list, length: int, fill=0) -> list:
+    if len(data) >= length:
+        return data
+    return data + (length - len(data)) * [fill]
+
+def getOverviewData(start, end, fault_type):
+
+    right_tabel = ''' from dcenter.l2_m_primary_data lmpd
+         left join dcenter.l2_fu_acc_t lfat on lmpd.slabid = lfat.slab_no
+         left join dcenter.l2_m_plate lmp on lmpd.slabid = lmp.slabid
+         left join dcenter.l2_cc_pdi lcp on lmpd.slabid = lcp.slab_no
+         right join app.deba_dump_data dd on dd.upid = lmp.upid
+         right join app.deba_dump_properties ddp on ddp.upid = dd.upid'''
+
+    select = []
+    if fault_type == 'performance':
+        select = ['ddp.p_f_label', 'dd.status_fqc']
+    elif fault_type == 'thickness':
+        select = []
+    select = ','.join(select)
+
+    sql = '''select     dd.upid, 
+                        lmpd.steelspec,
+                        dd.toc,
+                        dd.tgtwidth,
+                        dd.tgtlength,
+                        dd.tgtthickness *1000 as tgtthickness,
+                        dd.stats,
+                        (case when lmpd.shapecode = '11' or lmpd.shapecode = '12' then lmpd.tgtplatethickness5 else lmpd.tgtplatethickness1 end) * 1000,
+                        dd.status_cooling,
+                        lmpd.slabthickness * 1000 as slabthickness,
+                        lmpd.tgtdischargetemp,
+                        lmpd.tgttmplatetemp,
+                        lcp.cooling_start_temp,
+                        lcp.cooling_stop_temp,
+                        lcp.cooling_rate1,
+                        ''' + select + right_tabel + " where dd.toc between '" + start + " ' and ' " + end + " ' "
+
+    data, columns = queryDataFromDatabase(sql)
+    return data, columns
+# def rawDataToModelData(data_df):
+#     data_matrix = []
+#     labels_matrix = []
+#     feature_length = max(len(data_names), len(without_cooling_data_names))
+#     for idx, row in data_df.iterrows():
+#         status_cooling = row['status_cooling']
+#         if status_cooling == 0:
+#             iter_names = data_names
+#             labels = getpfList(row['p_f_label'])
+#         else:
+#             iter_names = without_cooling_data_names
+#             labels = getpfList(row['p_f_label'])
+#         item_data = []
+#         for name in iter_names:
+#             try:
+#                 item_data.append(row['stats'][name])
+#             except:
+#                 item_data.append(0)
+#         item_data = list(map(lambda x: 0.0 if x is None else x, item_data))
+#         item_data = fillListTail(item_data, feature_length, 0)
+#         data_matrix.append(item_data)
+#         labels_matrix.append(labels)
+#     return data_matrix, labels_matrix

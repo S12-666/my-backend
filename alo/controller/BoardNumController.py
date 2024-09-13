@@ -49,7 +49,6 @@ class ComputeBoardNum:
         if len(data) == 0:
             return 204, {}
 
-
         bad_count = 0
         good_count = 0
         no_count = 0
@@ -57,9 +56,9 @@ class ComputeBoardNum:
         p_type_name = ["gs", "pa", "pf", "pn", "ps"]
         t_type_name = []
         if fault_type == 'performance':
-            type_name =  p_type_name
+            type_name = p_type_name
         elif fault_type == 'thickness':
-            type_name =  p_type_name
+            type_name = p_type_name
 
         for item in data:
             item_df = pd.DataFrame(data = [item], columns = col_names)
@@ -75,20 +74,6 @@ class ComputeBoardNum:
             item_p = item[2]
             item_p = list(map(lambda x: 1 if x == 0 else 0, item_p))
             type_list.append(item_p)
-
-
-            # if item[1] == 1:    # status_fqc
-            #     no_p_count += 1
-            # elif item[1] == 0:
-            #     if (np.array(item[2]).sum() == 10) or (len(item[2]) == 0):     # fqc_label
-            #         no_p_count += 1
-            #     elif 0 in item[2]:
-            #         bad_count += 1
-            #     else:
-            #         good_count += 1
-            #         item_p = item[2]
-            #         item_p = list(map(lambda x: 1 if x == 0 else 0, item_p))
-            #         p_type_list.append(item_p)
 
         type_count = np.sum(np.array(type_list), axis=0).tolist()
 
