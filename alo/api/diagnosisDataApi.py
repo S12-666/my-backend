@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 import os
 from .singelSteel import new_modeldata, data_names, without_cooling_data_names, data_names_meas
+from ..api import singelSteel
 # path = os.getcwd()
 parser = reqparse.RequestParser(trim=True, bundle_errors=True)
 # path1=os.path.abspath('.') + 'wide_117_data_flag_20190831.csv'
@@ -87,11 +88,13 @@ class diagnosisDataApi(Resource):
         # thickness = float(args["thickness"])
         # platetype=json.loads(args["platetype"])
         selection = []
+        use_data_names = []
         if (fault_type == 'performance'):
             selection = ['ddp.p_f_label', 'status_fqc']
+            use_data_names = singelSteel.data_names
         elif (fault_type == 'thickness'):
-            selection = ['ddp.p_f_label', 'status_fqc']
-
+            selection = ['thickness_label', 'status_thickness']
+            use_data_names = singelSteel.t_data_names
         select = ','.join(selection)
 
         data, col_names, status_cooling, fqcflag = new_modeldata(parser,
@@ -116,7 +119,7 @@ class diagnosisDataApi(Resource):
         try:
             _data_names = []
             if status_cooling == 0:
-                _data_names = data_names
+                _data_names = use_data_names
             elif status_cooling == 1:
                 _data_names = without_cooling_data_names
 

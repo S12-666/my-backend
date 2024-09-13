@@ -36,10 +36,13 @@ class VisualizationMDS(Resource):
                 description: 执行成功
         """
         selection = []
+        use_data_names = []
         if (fault_type == 'performance'):
             selection = ['ddp.p_f_label', thicklabel, 'dd.status_fqc']
+            use_data_names = singelSteel.data_names
         elif (fault_type == 'thickness'):
             selection = ['ddp.p_f_label', thicklabel, 'dd.status_fqc']
+            use_data_names = singelSteel.t_data_names
         select = ','.join(selection)
 
         data, status_cooling, col_names = modeldata_1(parser,
@@ -57,7 +60,7 @@ class VisualizationMDS(Resource):
 
         data_names = []
         if status_cooling == 0:
-            data_names = singelSteel.data_names
+            data_names = use_data_names
         elif status_cooling == 1:
             data_names = singelSteel.without_cooling_data_names
         VisualizationMDS = getVisualizationMDS()

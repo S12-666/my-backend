@@ -44,13 +44,14 @@ class getFlag(Resource):
         """
         selection = []
         if (fault_type == 'performance'):
-            selection = 'ddp.p_f_label'
+            selection = ['ddp.p_f_label', 'dd.status_fqc']
         elif (fault_type == 'thickness'):
-            selection = 'ddp.p_f_label'
+            selection = ['thickness_label', 'status_thickness']
+        select = ','.join(selection)
 
         # return {'hello': 'world'}
         tocSelect = [startTime, endTime]
-        data, col_names = new_getData(['dd.upid', selection, 'dd.status_fqc'], {'status_stats':True}, [], [], [], tocSelect, [], [], '', '')
+        data, col_names = new_getData(['dd.upid', select ], {'status_stats':True}, [], [], [], tocSelect, [], [], '', '')
 
         result = {}
         # print(data)

@@ -5,7 +5,7 @@ import pandas as pd
 from flask_restful import Resource, reqparse
 from . import api
 from ..controller.VisualizationTsneController_V1 import getVisualizationTsne_1
-from .singelSteel import modeldata_1,mareymodeldata,thicklabel,p_data_names
+from .singelSteel import modeldata_1,mareymodeldata,thicklabel,p_data_names,t_data_names
 from ..api import singelSteel
 
 parser = reqparse.RequestParser(trim=True, bundle_errors=True)
@@ -40,10 +40,13 @@ class VisualizationTsne_1(Resource):
                 description: 执行成功
         """
         selection = []
+        use_data_names = []
         if (fault_type == 'performance'):
             selection = ['ddp.p_f_label', thicklabel, 'dd.status_fqc']
+            use_data_names = singelSteel.data_names
         elif (fault_type == 'thickness'):
             selection = ['ddp.p_f_label', thicklabel, 'dd.status_fqc']
+            use_data_names = t_data_names
         select = ','.join(selection)
 
         # data, status_cooling = modeldata(parser,['dd.upid', 'lmpd.steelspec','dd.toc', 'dd.tgtwidth','dd.tgtlength','dd.tgtthickness','dd.stats','dd.fqc_label',thicklabel,'dd.status_fqc'], limit)
@@ -60,7 +63,7 @@ class VisualizationTsne_1(Resource):
 
         data_names = []
         if status_cooling == 0:
-            data_names = singelSteel.data_names
+            data_names = use_data_names
         elif status_cooling == 1:
             data_names = singelSteel.without_cooling_data_names
         json = VisualizationTsne.run(data, data_names, col_names, fault_type)

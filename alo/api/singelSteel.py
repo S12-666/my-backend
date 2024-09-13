@@ -47,6 +47,8 @@ p_data_names = [# gs
                 # ps
                 "hardness_1_b", "hardness_1_t","hardness_2_b","hardness_2_t","hardness_3_b","hardness_3_t","hardness_avg_b","hardness_avg_t" ]
 
+t_data_names = []
+
 without_cooling_data_names = ["charging_temp_act", "tgtplatelength2", "tgtplatethickness2", "tgtwidth", "slab_length", "slab_thickness", "slab_weight_act", "slab_width",
             "ave_temp_1", "ave_temp_2", "ave_temp_dis", "ave_temp_pre", "ave_temp_soak", "ave_temp_entry_1", "ave_temp_entry_2", "ave_temp_entry_pre",
             "ave_temp_entry_soak", "center_temp_dis", "center_temp_entry_1", "center_temp_entry_2", "center_temp_entry_pre", "center_temp_entry_soak",
