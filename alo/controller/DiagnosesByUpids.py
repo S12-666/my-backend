@@ -1,8 +1,9 @@
 import pandas as pd
 from ..models.diagnosesData import diagnosesTrainDataByArgs, diagnosesTestDataByUpid
-from ..methods.dataProcessing import plateHasDefect, plateDetailedDefect, rawDataToModelData
+from ..methods.dataProcessing import plateDetailedDefect, rawDataToModelData
 from ..methods.define import data_names, flag_names, specifications
 from ..methods.DiagnosesAlgorithm import DiagnosesAlgorithm
+from ..utils import plateHasDefect
 import time
 class DiagnosesDataByUpidsController:
     def __init__(self, args):
