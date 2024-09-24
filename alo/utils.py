@@ -8,7 +8,7 @@ import pandas as pd
 def readConfig():
     # f = open('usr/src/config/config.txt')
     # f = open('usr/src/app/config.txt')
-    f = open('config_temp.txt')
+    f = open('config.txt')
     for line in f:
         configArr = line.split(' ')
         break
