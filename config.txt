@@ -1,1 +1,0 @@
-BSData20190712 postgres woshimima 172.20.110.176 5432
