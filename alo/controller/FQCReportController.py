@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from ..methods.dataProcessing import getpfList, getFqcList, slabel
 from ..models.KeyIndicatorsData import getFQCReportSQL
-from utils import label_judge
+from ..utils import label_judge
 from datetime import datetime, timedelta
 import datetime as dt
 

@@ -623,3 +623,37 @@ def getOverviewData(start, end, fault_type):
 #         data_matrix.append(item_data)
 #         labels_matrix.append(labels)
 #     return data_matrix, labels_matrix
+
+def response_wrapper(res: object = None, code: int = 200, msg: str = '') -> object:
+    """
+        code:
+            0 => success
+            1 => response warning
+            2 => request parameter error
+            4 => no response content
+            5 => data calculation error
+    """
+    if res is None:
+        res = {}
+
+    if code == 200:
+        if not msg:
+            msg = 'success'
+            if hasattr(res, '__len__') and len(res) == 0:
+                msg = 'success(no data)'
+    elif code == 400:
+        msg = 'request parameter error' if not msg else msg
+    elif code == 500:
+        msg = 'internal server error' if not msg else msg
+    return {'code': code, 'msg': msg, 'data': res}, 200, {'Access-Control-Allow-Origin': '*'}
+
+def format_value(val: float, s: str = '.4f') -> float:
+    return float(format(val, s))
+
+
+def label_judge(arr):
+    if 0 in arr:
+        return 0
+    if 1 in arr:
+        return 1
+    return 2

@@ -38,3 +38,9 @@ from . import GetNumberOfPlatesByTimeApi
 from . import GetScatterDataByTimeApi
 from . import DiagnosesByUpidsApi
 from . import RediagnosesApi
+from . import getSpecDataApi
+from . import getSpecCountApi
+from . import heatingReportApi
+from . import rollingReportApi
+from . import coolingReportApi
+from . import fqcReportApi

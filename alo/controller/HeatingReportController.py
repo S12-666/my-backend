@@ -1,7 +1,7 @@
 import pandas as pd
 from ..methods.dataProcessing import getpfList
 from ..models.KeyIndicatorsData import getHeatingReportSQL
-from utils import label_judge
+from ..utils import label_judge
 from datetime import datetime, timedelta
 
 class HeatingReportController:

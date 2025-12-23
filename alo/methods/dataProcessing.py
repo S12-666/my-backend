@@ -2,7 +2,11 @@ import numpy as np
 import pandas as pd
 from .define import data_names, without_cooling_data_names
 def getpfList(p_f_label):
-    return p_f_label if p_f_label else []
+    if p_f_label == []:
+        return [2,2,2,2,2]
+    else:
+        return p_f_label
+    # return p_f_label if p_f_label else []
 def plateHasDefect(status: int, p_f_label: dict) -> int:
     if status == 1:
         return 404
@@ -49,3 +53,14 @@ def rawDataToModelData(data_df):
         data_matrix.append(item_data)
         labels_matrix.append(labels)
     return data_matrix, labels_matrix
+
+def getFqcList(fqc_label):
+    return fqc_label['method1']['data'] if fqc_label else [2, 2, 2, 2, 2]
+
+
+def slabel(fqc_label):
+    if (np.array(fqc_label).sum() == 10):
+        return 2
+    elif 0 in fqc_label:
+        return 0
+    return 1
