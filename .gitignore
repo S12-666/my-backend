@@ -10,3 +10,4 @@ dist
 instance/*
 __pycache__
 config_local.txt
+config.txt
