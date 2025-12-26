@@ -200,3 +200,52 @@ def getFQCReportSQL(conditions):
     '''.format(conditions = conditions)
     data, columns = queryDataFromDatabase(sql)
     return data, columns
+
+def getHeatingDetialSQL(conditions):
+    sql = '''
+        SELECT
+	        dd.upid,
+	        lff.slab_no,
+	        lff.slab_thickness,
+	        lff.heating_pattern_code,
+	        lff.fce_no,
+	        lff.in_fce_time,
+	        lff.ave_temp_entry_pre,
+	        lff.sur_temp_entry_pre,
+	        lff.center_temp_entry_pre,
+	        lff.skid_temp_entry_pre,
+	        lff.ave_temp_pre,
+	        lff.staying_time_pre,
+	        lff.ave_temp_entry_1,
+	        lff.sur_temp_entry_1,
+	        lff.center_temp_entry_1,
+	        lff.skid_temp_entry_1,
+	        lff.ave_temp_1,
+	        lff.staying_time_1,
+	        lff.ave_temp_entry_2,
+	        lff.sur_temp_entry_2,
+	        lff.center_temp_entry_2,
+	        lff.skid_temp_entry_2,
+	        lff.ave_temp_2,
+	        lff.staying_time_2,
+	        lff.ave_temp_entry_soak,
+	        lff.sur_temp_entry_soak,
+	        lff.center_temp_entry_soak,
+	        lff.skid_temp_entry_soak,
+	        lff.ave_temp_soak,
+	        lff.staying_time_soak,
+	        lff.sur_temp_dis,
+	        lff.center_temp_dis,
+	        lff.skid_temp_dis,
+	        lff.ave_temp_dis,
+	        lff.discharge_time
+        FROM
+	        app.deba_dump_data dd
+	        LEFT JOIN dcenter.l2_fu_flftr60 lff ON lff.upid = dd.upid 
+        WHERE
+	        {conditions}
+        ORDER BY
+	        dd.toc
+    '''.format(conditions = conditions)
+    data, columns = queryDataFromDatabase(sql)
+    return data, columns

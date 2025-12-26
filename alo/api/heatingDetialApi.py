@@ -31,4 +31,4 @@ class GetHeatingDetialApi(Resource):
             return response_wrapper({}, 500, f"Server Error: {str(e)}")
             # 服务器内部错误返回码
 
-api.add_resource(GetHeatingDetialApi, '/v1.0/pidas/getHeatingReport')
+api.add_resource(GetHeatingDetialApi, '/v1.0/pidas/getHeatingDetial')
