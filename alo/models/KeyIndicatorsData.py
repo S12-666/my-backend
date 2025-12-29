@@ -205,6 +205,7 @@ def getHeatingDetialSQL(conditions):
     sql = '''
         SELECT
 	        dd.upid,
+	        dd.furnace,
 	        lff.slab_no,
 	        lff.slab_thickness,
 	        lff.heating_pattern_code,

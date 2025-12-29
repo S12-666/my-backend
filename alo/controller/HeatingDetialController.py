@@ -71,5 +71,6 @@ class HeatingDetialController:
             'furnaceNo': data_sr.fce_no,
             'duration': data_sr.in_fce_time,
             'durationRange': [str(enter_fce_time), str(discharge_time)],
-            'section': section_info
+            'section': section_info,
+            'furnace': data_sr.furnace
         }
