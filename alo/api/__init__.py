@@ -45,3 +45,4 @@ from . import rollingReportApi
 from . import coolingReportApi
 from . import fqcReportApi
 from . import heatingDetialApi
+from . import rollingDetialApi

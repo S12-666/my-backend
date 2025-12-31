@@ -650,6 +650,10 @@ def response_wrapper(res: object = None, code: int = 200, msg: str = '') -> obje
 def format_value(val: float, s: str = '.4f') -> float:
     return float(format(val, s))
 
+def concat_dict(dict_1: dict, dict_2: dict) -> dict:
+    for key in dict_2:
+        dict_1[key] = dict_2[key]
+    return dict_1
 
 def label_judge(arr):
     if 0 in arr:
