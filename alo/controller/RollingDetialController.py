@@ -140,10 +140,10 @@ class RollingDetialController:
                 else:
                     res['Epsilon'].append(0)
 
-                res['ForcePost'].append(np.mean(row.rollforcepost))
-                res['ForceMeas'].append(np.mean(row.rollforcemeas))
-                res['TorquePost'].append(np.mean(row.torquepost))
-                res['TorqueMeas'].append(np.mean(row.torquemeas))
+                res['ForcePost'].append(abs(np.mean(row.rollforcepost)))
+                res['ForceMeas'].append(abs(np.mean(row.rollforcemeas)))
+                res['TorquePost'].append(abs(np.mean(row.torquepost)))
+                res['TorqueMeas'].append(abs(np.mean(row.torquemeas)))
                 cur_run = row.run + 1
 
             for key in res:
