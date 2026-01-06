@@ -8,6 +8,7 @@ def get_pdi_data(conditions):
             LMPD.SLABWIDTH,
             LMPD.SLABLENGTH,
             LMPD.STEELSPEC,
+            LMPD.STEELSPEC,
             LCP.TAPPING_CODE,
             LMPD.PRODUCTCATEGORY,
             LMPD.TGTPLATETHICKNESS2,
@@ -26,7 +27,7 @@ def get_pdi_data(conditions):
     """.format(conditions = conditions)
     data, columns = queryDataFromDatabase(sql)
     return data, columns
-def get_controlled_rolling_data(upid: str):
+def get_controlled_rolling_data(conditions):
     sql = """
         SELECT LMPD.UPID,
             LMPD.SLABID,
@@ -48,11 +49,11 @@ def get_controlled_rolling_data(upid: str):
         FROM DCENTER.L2_M_PRIMARY_DATA LMPD
         LEFT JOIN DCENTER.L2_FU_FLFTR60 LFF60 ON LMPD.UPID = LFF60.UPID
         LEFT JOIN DCENTER.L2_M_MV_THICKNESS_PG LMPG ON LMPD.UPID = LMPG.UPID
-        WHERE LMPD.UPID = '{upid}';
-    """.format(upid=upid)
+        WHERE {conditions};
+    """.format(conditions=conditions)
     data, columns = queryDataFromDatabase(sql)
     return data, columns
-def get_roll_status_data(upid: str):
+def get_roll_status_data(conditions):
     sql = """
         SELECT LMPD.UPID,
             LMPD.SLABID,
@@ -67,11 +68,11 @@ def get_roll_status_data(upid: str):
             LMP.BOTWRPLATECOUNTFM
         FROM DCENTER.L2_M_PLATE LMP
         LEFT JOIN DCENTER.L2_M_PRIMARY_DATA LMPD ON LMPD.UPID = LMP.UPID
-        WHERE LMPD.UPID = '{upid}';
-    """.format(upid=upid)
+        WHERE {conditions};
+    """.format(conditions = conditions)
     data, columns = queryDataFromDatabase(sql)
     return data, columns
-def get_thickness_data(upid):
+def get_thickness_data(conditions):
     sql = """
         SELECT LMPG.UPID,
             LMPG.POSITION,
@@ -83,13 +84,14 @@ def get_thickness_data(upid):
             LMPD.MINPLATETHICKNESS2
         FROM DCENTER.L2_M_MV_THICKNESS_PG LMPG
         LEFT JOIN DCENTER.L2_M_PRIMARY_DATA LMPD ON LMPD.UPID = LMPG.UPID
-        WHERE LMPG.UPID = '{upid}';
-    """.format(upid=upid)
+        WHERE {conditions};
+    """.format(conditions=conditions)
     data, columns = queryDataFromDatabase(sql)
     return data, columns
-def get_force_torque_data(upid):
+def get_force_torque_data(conditions):
     sql = """
         SELECT
+            LMPD.UPID,
             LMPHP.RUN,
             LMPHPRE.ENTRYTHICKNESS,
             LMPHP.EXITTHICKNESS,
@@ -100,12 +102,13 @@ def get_force_torque_data(upid):
         FROM DCENTER.L2_M_PSC_HPASS_POST LMPHP
         LEFT JOIN DCENTER.L2_M_PSC_HPASS_PRE LMPHPRE ON LMPHP.UPID = LMPHPRE.UPID AND LMPHPRE.RUN = LMPHP.RUN
         LEFT JOIN DCENTER.L2_M_PSC_HPASS_MEAS LMPHM ON LMPHP.UPID = LMPHM.UPID AND LMPHM.RUN = LMPHP.RUN
-            WHERE LMPHP.UPID = '{upid}'
+        RIGHT JOIN DCENTER.L2_M_PRIMARY_DATA LMPD ON LMPHP.UPID = LMPD.UPID
+            WHERE {conditions}
             ORDER BY LMPHP.RUN;
-    """.format(upid=upid)
+    """.format(conditions=conditions)
     data, columns = queryDataFromDatabase(sql)
     return data, columns
-def get_thick_width_data(upid):
+def get_thick_width_data(conditions):
     sql = """
         SELECT LMPD.UPID,
             LMPD.SLABID,
@@ -116,8 +119,8 @@ def get_thick_width_data(upid):
             LMPHP.EXITWIDTH
         FROM DCENTER.L2_M_PRIMARY_DATA LMPD
         LEFT JOIN DCENTER.L2_M_PSC_HPASS_POST LMPHP ON LMPD.UPID = LMPHP.UPID
-        WHERE LMPD.UPID = '{upid}'
+        WHERE {conditions}
         ORDER BY LMPHP.RUN;
-    """.format(upid=upid)
+    """.format(conditions=conditions)
     data, columns = queryDataFromDatabase(sql)
     return data, columns

@@ -28,14 +28,14 @@ class RollingDetialController:
 
         table_data = {}
         concat_dict(table_data, self.pdi_data(conditions))
-        concat_dict(table_data, self.control_data())
-        concat_dict(table_data, self.status_data())
+        concat_dict(table_data, self.control_data(conditions))
+        concat_dict(table_data, self.status_data(conditions))
         res['tabledata'] = table_data
         # 2. 整合 Curve 数据
         # 为了防止 key 冲突（如 Passes），将不同的曲线数据放入独立的字段中
-        res['thickness_curve'] = self.thickness_data()
-        res['force_torque_curve'] = self.force_torque_data()
-        res['width_thick_curve'] = self.width_thick_data()
+        res['thickness_curve'] = self.thickness_data(conditions)
+        res['force_torque_curve'] = self.force_torque_data(conditions)
+        res['width_thick_curve'] = self.width_thick_data(conditions)
 
         return res
 
@@ -51,10 +51,10 @@ class RollingDetialController:
             pdi_dict = {}
         return pdi_dict
 
-    def control_data(self):
+    def control_data(self, conditions):
         try:
             # 注意：如果 self.upid 为空，这里可能需要根据实际业务调整逻辑，目前保持原样
-            control_raw, control_cols = get_controlled_rolling_data(self.upid)
+            control_raw, control_cols = get_controlled_rolling_data(conditions)
             if not control_raw: return {}
 
             control_series = pd.Series(data=control_raw[0], index=control_cols)
@@ -77,9 +77,9 @@ class RollingDetialController:
             control_dict = {}
         return control_dict
 
-    def status_data(self):
+    def status_data(self, conditions):
         try:
-            status_raw, status_cols = get_roll_status_data(self.upid)
+            status_raw, status_cols = get_roll_status_data(conditions)
             if not status_raw: return {}
             status_series = pd.Series(data=status_raw[0], index=status_cols)
             status_dict = status_series.to_dict()
@@ -87,9 +87,9 @@ class RollingDetialController:
             status_dict = {}
         return status_dict
 
-    def thickness_data(self):
+    def thickness_data(self, conditions):
         try:
-            thick_raw, thick_cols = get_thickness_data(self.upid)
+            thick_raw, thick_cols = get_thickness_data(conditions)
             if not thick_raw: return {}
             thick_series = pd.Series(data=thick_raw[0], index=thick_cols)
             thick_dict = thick_series.to_dict()
@@ -104,9 +104,9 @@ class RollingDetialController:
         except:
             return {}
 
-    def force_torque_data(self):
+    def force_torque_data(self, conditions):
         try:
-            ft_raw, ft_cols = get_force_torque_data(self.upid)
+            ft_raw, ft_cols = get_force_torque_data(conditions)
             if not ft_raw: return {}
             ft_df = pd.DataFrame(data=ft_raw, columns=ft_cols)
             res = {
@@ -153,9 +153,9 @@ class RollingDetialController:
         except:
             return {}
 
-    def width_thick_data(self):
+    def width_thick_data(self, conditions):
         try:
-            tw_raw, tw_cols = get_thick_width_data(self.upid)
+            tw_raw, tw_cols = get_thick_width_data(conditions)
             if not tw_raw: return {}
             tw_df = pd.DataFrame(data=tw_raw, columns=tw_cols)
             res = {
