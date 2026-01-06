@@ -1,5 +1,5 @@
 from ..utils import queryDataFromDatabase
-def get_cooling_pdi_data(upid: str):
+def get_cooling_pdi_data(conditions):
     sql = """
         SELECT LMPD.UPID,
             LMPD.SLABID,
@@ -30,11 +30,11 @@ def get_cooling_pdi_data(upid: str):
             LCP.CHEMISTRY_V
         FROM DCENTER.L2_M_PRIMARY_DATA LMPD
         LEFT JOIN DCENTER.L2_CC_PDI LCP ON LMPD.SLABID = LCP.SLAB_NO
-        WHERE LMPD.UPID = '{upid}';
-    """.format(upid=upid)
+        WHERE {conditions};
+    """.format(conditions=conditions)
     data, columns = queryDataFromDatabase(sql)
     return data, columns
-def get_cooling_flow_data(upid: str):
+def get_cooling_flow_data(conditions):
     sql = """
         SELECT
             LCPRE.VC_FLOW_TOP_01,
@@ -81,11 +81,11 @@ def get_cooling_flow_data(upid: str):
             LCPRE.EM_POS_ABS_4
         FROM DCENTER.L2_CC_PRESET LCPRE
         LEFT JOIN DCENTER.L2_M_PRIMARY_DATA LMPD ON LMPD.SLABID = LCPRE.SLAB_NO
-        WHERE LMPD.UPID = '{upid}';
-    """.format(upid=upid)
+        WHERE {conditions};
+    """.format(conditions=conditions)
     data, columns = queryDataFromDatabase(sql)
     return data, columns
-def get_cooling_specific_data(upid: str):
+def get_cooling_specific_data(conditions):
     sql = """
         SELECT
             LCPC.AVG_P2,
@@ -124,17 +124,18 @@ def get_cooling_specific_data(upid: str):
         LEFT JOIN DCENTER.L2_CC_POSTCALC LCPC ON LMPD.SLABID = LCPC.SLAB_NO
         LEFT JOIN DCENTER.L2_CC_PRESET LCPRE ON LMPD.SLABID = LCPRE.SLAB_NO
         LEFT JOIN DCENTER.L2_CC_PDI LCP ON LMPD.SLABID = LCP.SLAB_NO
-        WHERE LMPD.UPID = '{upid}';
-    """.format(upid=upid)
+        WHERE {conditions};
+    """.format(conditions=conditions)
     data, columns = queryDataFromDatabase(sql)
     return data, columns
-def get_cooling_scanner_data(upid: str):
+def get_cooling_scanner_data(conditions):
     sql = """
-        SELECT UPID,
-            COOLING,
-            STATUS_COOLING
-        FROM APP.DEBA_DUMP_DATA
-        WHERE UPID = '{upid}';
-    """.format(upid=upid)
+        SELECT DD.UPID,
+            DD.COOLING,
+            DD.STATUS_COOLING
+        FROM APP.DEBA_DUMP_DATA DD
+        LEFT JOIN DCENTER.L2_M_PRIMARY_DATA LMPD ON LMPD.UPID = DD.UPID
+        WHERE {conditions};
+    """.format(conditions=conditions)
     data, columns = queryDataFromDatabase(sql)
     return data, columns

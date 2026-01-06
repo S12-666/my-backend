@@ -1,5 +1,7 @@
 import pandas as pd
-from ..models.KeyIndicatorsData import getHeatingDetialSQL
+from ..models.queryCoolingProcessData import get_cooling_pdi_data, get_cooling_flow_data, get_cooling_specific_data
+from ..models.queryCoolingProcessData import get_cooling_scanner_data
+from ..utils import concat_dict, format_value
 import datetime as dt
 
 class CoolingDetialController:
@@ -10,67 +12,59 @@ class CoolingDetialController:
 
     def run(self):
 
+        if not self.upid and not self.slabid:
+            return {}
+
         if self.upid:
-            conditions = f"dd.upid = '{self.upid}'"
+            conditions = f"lmpd.upid = '{self.upid}'"
         else:
-            conditions = f"lff.slab_no = '{self.slabid}'"
+            conditions = f"lmpd.slabid = '{self.slabid}'"
 
-        row_data, col = getHeatingDetialSQL(conditions)
-        data_sr = pd.Series(data=row_data[0], index=col)
-        data_sr.fillna(0, inplace=True)
+        res = {}
+        table_data = self.process_table(conditions)
+        scanner_data = self.process_scanner_map(conditions)
 
-        discharge_time = data_sr.discharge_time
-        enter_fce_time = discharge_time - dt.timedelta(minutes=data_sr.in_fce_time)
-        section_info = {
-            'discharging': {
-                'surface': data_sr.sur_temp_dis,
-                'center': data_sr.center_temp_dis,
-                'seat': data_sr.skid_temp_dis,
-                'average': data_sr.ave_temp_dis,
-            },
-            'preheating': {
-                'entry': data_sr.ave_temp_entry_pre,
-                'surface': data_sr.sur_temp_entry_pre,
-                'center': data_sr.center_temp_entry_pre,
-                'seat': data_sr.skid_temp_entry_pre,
-                'average': data_sr.ave_temp_pre,
-                'duration': data_sr.staying_time_pre,
-            },
-            'heating1': {
-                'entry': data_sr.ave_temp_entry_1,
-                'surface': data_sr.sur_temp_entry_1,
-                'center': data_sr.center_temp_entry_1,
-                'seat': data_sr.skid_temp_entry_1,
-                'average': data_sr.ave_temp_1,
-                'duration': data_sr.staying_time_1,
-            },
-            'heating2': {
-                'entry': data_sr.ave_temp_entry_2,
-                'surface': data_sr.sur_temp_entry_2,
-                'center': data_sr.center_temp_entry_2,
-                'seat': data_sr.skid_temp_entry_2,
-                'average': data_sr.ave_temp_2,
-                'duration': data_sr.staying_time_2,
-            },
-            'soaking': {
-                'entry': data_sr.ave_temp_entry_soak,
-                'surface': data_sr.sur_temp_entry_soak,
-                'center': data_sr.center_temp_entry_soak,
-                'seat': data_sr.skid_temp_entry_soak,
-                'average': data_sr.ave_temp_soak,
-                'duration': data_sr.staying_time_soak,
-            },
-        }
+        res['table_data'] = table_data
+        res['scanner_data'] = scanner_data
 
+        return res
 
-        return {
-            'upid': data_sr.upid,
-            'slabid': data_sr.slab_no,
-            'thick': data_sr.slab_thickness,
-            'HeatMode': data_sr.heating_pattern_code,
-            'furnaceNo': data_sr.fce_no,
-            'duration': data_sr.in_fce_time,
-            'durationRange': [str(enter_fce_time), str(discharge_time)],
-            'section': section_info,
-            'furnace': data_sr.furnace
-        }
+    def process_table(self, conditions):
+        pdi_dict = self.pdi_data(conditions)
+        flow_dict = self.flow_data(conditions)
+        specific_dict = self.specific_data(conditions)
+        res = {}
+        concat_dict(res, pdi_dict)
+        concat_dict(res, flow_dict)
+        concat_dict(res, specific_dict)
+        return res
+    def process_scanner_map(self, conditions):
+        scan_raw, scan_col = get_cooling_scanner_data(conditions)
+        scan_series = pd.Series(data=scan_raw[0], index=scan_col)
+        if scan_series.status_cooling == 1:
+            return {}
+        return scan_series.cooling
+    def pdi_data(self, conditions):
+        try:
+            pdi_raw, pdi_cols = get_cooling_pdi_data(conditions)
+            pdi_series = pd.Series(data=pdi_raw[0], index=pdi_cols)
+            pdi_dict = pdi_series.fillna(0).to_dict()
+        except:
+            pdi_dict = {}
+        return pdi_dict
+    def flow_data(self, conditions):
+        try:
+            flow_raw, flow_cols = get_cooling_flow_data(conditions)
+            flow_series = pd.Series(data=flow_raw[0], index=flow_cols)
+            flow_dict = flow_series.fillna(0).to_dict()
+        except:
+            flow_dict = {}
+        return flow_dict
+    def specific_data(self, conditions):
+        try:
+            specific_raw, specific_cols = get_cooling_specific_data(conditions)
+            specific_series = pd.Series(data=specific_raw[0], index=specific_cols)
+            specific_dict = specific_series.fillna(0).to_dict()
+        except:
+            specific_dict = {}
+        return specific_dict
