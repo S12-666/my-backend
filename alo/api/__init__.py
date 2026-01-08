@@ -47,3 +47,4 @@ from . import fqcReportApi
 from . import heatingDetialApi
 from . import rollingDetialApi
 from . import coolingDetialApi
+from . import fqcDetialApi
