@@ -4,7 +4,7 @@ def getFQCDetialSQL(conditions):
     sql = '''
         SELECT
             dd.upid,
-            lcp.slab_no,
+            lmpd.slabid,
             dd.toc,
             lcp.thick,
             lcp.width / 1000 AS width,

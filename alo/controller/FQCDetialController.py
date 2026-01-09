@@ -40,7 +40,7 @@ class FQCDetialController:
 
         return {
             'upid': data_sr.upid,
-            'slabid': data_sr.slab_no,
+            'slabid': data_sr.slabid,
             'toc': str(data_sr.toc),
             'thick': data_sr.thick,
             'width': data_sr.width,
