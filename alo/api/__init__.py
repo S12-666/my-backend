@@ -48,3 +48,4 @@ from . import heatingDetialApi
 from . import rollingDetialApi
 from . import coolingDetialApi
 from . import fqcDetialApi
+from . import singelPredictionApi
