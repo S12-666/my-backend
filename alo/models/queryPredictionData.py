@@ -71,3 +71,22 @@ def get_unsupervised_train_data(cooling_status, platetype, target):
 
     return data, columns
 
+
+def get_upid(upid):
+    sql = '''
+        SELECT
+	        dd.upid,
+	        dd.platetype,
+	        dd.status_cooling,
+	        ddp.p_f_label 
+        FROM
+	        app.deba_dump_data dd
+	        LEFT JOIN app.deba_dump_properties ddp ON dd.upid = ddp.upid 
+        WHERE
+	        dd.upid = '{upid}'
+    '''.format(upid=upid)
+
+    data, columns = queryDataFromDatabase(sql)
+    return data, columns
+
+

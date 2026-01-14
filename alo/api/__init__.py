@@ -49,3 +49,4 @@ from . import rollingDetialApi
 from . import coolingDetialApi
 from . import fqcDetialApi
 from . import singelPredictionApi
+from . import getPredictionUpidApi
