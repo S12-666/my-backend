@@ -2,6 +2,8 @@ import xgboost as xgb
 import shap
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_auc_score, accuracy_score, recall_score
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
 import numpy as np
 
 
@@ -86,3 +88,79 @@ class RealTimeTrainer:
         }
 
         return model, metrics
+
+    @staticmethod
+    def train_pca_anomaly(df, feature_cols):
+        """
+        现场训练 PCA 异常检测模型
+        :return: (pipeline, metadata)
+        """
+        X = df[feature_cols].fillna(0)
+
+        if len(X) > 50000:
+            X = X.sample(n=50000, random_state=42)
+
+        scaler = StandardScaler()
+        X_scaled = scaler.fit_transform(X)
+
+        pca = PCA(n_components=0.90)
+        pca.fit(X_scaled)
+
+        X_recon = pca.inverse_transform(pca.transform(X_scaled))
+        recon_errors = np.sum(np.square(X_scaled - X_recon), axis=1)
+        confidence_level = 99.0
+
+        threshold = np.percentile(recon_errors, confidence_level)
+        info_retention = np.sum(pca.explained_variance_ratio_)
+
+        model_bundle = {
+            "scaler": scaler,
+            "pca": pca,
+            "threshold": threshold,
+            "feature_cols": feature_cols
+        }
+
+        metrics = {
+            "model_type": "PCA_Reconstruction",
+            "train_size": len(X),
+            "accuracy": round(float(info_retention), 4),
+            "recall_abnormal": round(float(confidence_level / 100), 4),
+            "threshold": round(float(threshold), 2)
+        }
+
+        return model_bundle, metrics
+
+    @staticmethod
+    def predict_pca(model_bundle, X_input):
+        """
+        使用 PCA 模型预测并计算“类 SHAP”值
+        """
+        scaler = model_bundle['scaler']
+        pca = model_bundle['pca']
+        threshold = model_bundle['threshold']
+        feature_cols = model_bundle['feature_cols']
+
+        X_scaled = scaler.transform(X_input)
+
+        X_pca = pca.transform(X_scaled)
+        X_recon = pca.inverse_transform(X_pca)
+
+        diff = np.abs(X_scaled - X_recon)[0]  # 取第一行
+
+        total_error = np.sum(np.square(X_scaled - X_recon))
+        pred_label = 0 if total_error > threshold else 1  # 0异常, 1正常
+
+        abnormal_prob = 1 - np.exp(-total_error / threshold)
+
+        feature_importance = []
+        for name, contribution, actual in zip(feature_cols, diff, X_input.iloc[0]):
+            feature_importance.append({
+                "feature": name,
+                "shap_value": float(contribution),
+                "actual_value": float(actual)
+            })
+
+        # 排序
+        feature_importance.sort(key=lambda x: x['shap_value'], reverse=True)
+
+        return pred_label, abnormal_prob, feature_importance[:10], total_error

@@ -121,23 +121,29 @@ class SingelPredictionController:
             result_dict['predictions'][target_name] = {"status": "error", "msg": str(e)}
 
     def _train_predict_unsupervised(self, X_input, feature_cols, target_name, result_dict):
-        """现场训练 IsolationForest 并预测"""
+        """处理无监督预测 (PCA版 - 统一样式)"""
         try:
             data, columns = queryPredictionData.get_unsupervised_train_data(self.status_cooling, self.platetype, target_name)
             # 1. 调用实时训练器
             train_data = self._data_process(data, target_name)
-            iso_model, metrics = RealTimeTrainer.train_isolation_forest(train_data, feature_cols)
+            model_bundle, metrics = RealTimeTrainer.train_pca_anomaly(train_data, feature_cols)
 
             # 2. 预测
-            iso_pred = iso_model.predict(X_input)[0]
-            final_pred = 1 if iso_pred == 1 else 0
+            pred_label, prob, top_features, current_error = RealTimeTrainer.predict_pca(model_bundle, X_input)
 
             result_dict['predictions'][target_name] = {
                 "status": "success",
-                "pred_label": final_pred,
-                "msg": "基于实时工艺数据的离群点检测",
-                "abnormal_prob": 0.0,
-                "model_metrics": metrics
+                "pred_label": int(pred_label),
+                "abnormal_prob": round(float(prob), 4),
+                "shap_base_value": 0.0,
+                "top_features": top_features,
+                "msg": "基于工艺一致性的重构检测",
+                "model_metrics": metrics,
+                "instance_metrics": {
+                    "current_score": round(float(current_error), 2),
+                    "threshold_score": metrics['threshold'],
+                    "is_safe": bool(current_error <= metrics['threshold'])
+                }
             }
         except Exception as e:
             result_dict['predictions'][target_name] = {"status": "error", "msg": str(e)}
