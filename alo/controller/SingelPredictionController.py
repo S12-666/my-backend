@@ -12,7 +12,7 @@ class SingelPredictionController:
         self.para = para
         self.upid = para.get('upid')
         # status_cooling: 0=过冷却, 1=未过冷却
-        self.status_cooling = int(para.get('status_cooling'))
+        self.status_cooling = para.get('status_cooling')
         self.platetype = para.get('platetype')
         self.label = para.get('label')
 
