@@ -50,3 +50,4 @@ from . import coolingDetialApi
 from . import fqcDetialApi
 from . import singelPredictionApi
 from . import getPredictionUpidApi
+from . import getSystemConfigApi
