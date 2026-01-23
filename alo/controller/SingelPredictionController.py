@@ -125,6 +125,7 @@ class SingelPredictionController:
         try:
             data, columns = queryPredictionData.get_unsupervised_train_data(self.status_cooling, self.platetype, target_name)
             # 1. 调用实时训练器
+            DF = pd.DataFrame(data=data, columns=columns)
             train_data = self._data_process(data, target_name)
             model_bundle, metrics = RealTimeTrainer.train_pca_anomaly(train_data, feature_cols)
 
@@ -173,6 +174,8 @@ class SingelPredictionController:
         index = labels_map.get(target_name)
         data_names = singelSteel.data_names if self.status_cooling == 0 else singelSteel.without_cooling_data_names
         for item in data:
+            if item[2] is None:
+                continue
             row = []
             for data_name in data_names:
                 row.append(item[1].get(data_name))

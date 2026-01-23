@@ -63,7 +63,7 @@ def get_unsupervised_train_data(cooling_status, platetype, target):
 	    LEFT JOIN app.deba_dump_properties_copy1 ddpc ON dd.upid = ddpc.upid 
         WHERE
 	        dd.status_cooling = {cooling_status} 
-	    -- AND dd.platetype = '{platetype}'
+	        -- AND dd.platetype = '{platetype}'
 	    -- AND ( ddpc.plabel :: INTEGER [] ) [ {index} ]!= 2
 	    LIMIT 5000
     '''.format(cooling_status=cooling_status,index = index, platetype= platetype)

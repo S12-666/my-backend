@@ -661,3 +661,32 @@ def label_judge(arr):
     if 1 in arr:
         return 1
     return 2
+
+def executeSql(sql: str):
+    """
+    专门用于执行 INSERT / UPDATE / DELETE 语句
+    """
+    configArr = readConfig()
+    conn = None
+    try:
+        conn = psycopg2.connect(
+            database=configArr[0],
+            user=configArr[1],
+            password=configArr[2],
+            host=configArr[3],
+            port=configArr[4]
+        )
+        cursor = conn.cursor()
+        cursor.execute(sql)
+        conn.commit() # 关键：提交事务
+        affected_rows = cursor.rowcount # 获取受影响行数
+        cursor.close()
+        return True, f"Success, affected rows: {affected_rows}"
+    except Exception as e:
+        if conn:
+            conn.rollback() # 出错回滚
+        print(f"Database Execution Error: {e}")
+        return False, str(e)
+    finally:
+        if conn:
+            conn.close()
