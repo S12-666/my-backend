@@ -10,14 +10,18 @@ class FQCDetialController:
         self.slabid = para['slabid']
 
     def run(self):
-
+        # 1. 构建查询条件
         if self.upid:
             conditions = f"dd.upid = '{self.upid}'"
         else:
             conditions = f"lcp.slab_no = '{self.slabid}'"
 
         row_data, col = getFQCDetialSQL(conditions)
+        if not row_data:
+            return {'msg': 'No data found', 'upid': self.upid, 'slabid': self.slabid}
+
         data_sr = pd.Series(data=row_data[0], index=col)
+
         data_sr.fillna(0, inplace=True)
 
         slabel = {
@@ -36,12 +40,25 @@ class FQCDetialController:
             'gs': getpfList(data_sr.p_f_label)[4],
         }
 
-        # p_data = data_sr.pa_data[]
+        raw_pred = data_sr.pred_label
+
+        if isinstance(raw_pred, list) and len(raw_pred) >= 5:
+            pred_label = {
+                'pa': raw_pred[0],
+                'pf': raw_pred[1],
+                'pn': raw_pred[2],
+                'ps': raw_pred[3],
+                'gs': raw_pred[4],
+            }
+        else:
+            pred_label = {
+                'pa': '', 'pf': '', 'pn': '', 'ps': '', 'gs': ''
+            }
 
         return {
             'upid': data_sr.upid,
             'slabid': data_sr.slabid,
-            'toc': str(data_sr.toc),
+            'toc': str(data_sr.toc) if data_sr.toc != 0 else '',
             'thick': data_sr.thick,
             'width': data_sr.width,
             'length': data_sr.length,
@@ -49,5 +66,7 @@ class FQCDetialController:
             'tgtwidth': data_sr.tgtwidth,
             'tgtlength': data_sr.tgtlength,
             'slabel': slabel,
-            'plabel': plabel
+            'plabel': plabel,
+            'pred_label': pred_label,
+            'msg': data_sr.msg if data_sr.msg != 0 else ''
         }
