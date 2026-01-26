@@ -52,3 +52,4 @@ from . import singelPredictionApi
 from . import getPredictionUpidApi
 from . import getSystemConfigApi
 from . import sendlPredictionApi
+from . import getTrendDataApi
