@@ -28,7 +28,7 @@ def getBoxData(self):
         SELECT
             dd.upid,
             dd.toc,
-            dd.tgtthickness,
+            dd.tgtthickness * 1000 as tgtthickness,
             dd.tgtwidth,
             dd.tgtlength,
             ddp.p_f_label,
@@ -42,6 +42,9 @@ def getBoxData(self):
         WHERE
             dd.toc >= to_timestamp('{start}', 'yyyy-mm-dd hh24:mi:ss')
             AND dd.toc <= to_timestamp('{end}', 'yyyy-mm-dd hh24:mi:ss')
+            AND lmpd.tgttmrestarttemp1 != 0
+	        AND lff.ave_temp_dis != 0
+	        AND dd.status_fqc = 0
         ORDER BY
             dd.toc
     '''.format(start=sql_start, end=sql_end)
