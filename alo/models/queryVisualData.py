@@ -1,5 +1,23 @@
 from ..utils import queryDataFromDatabase
 
+def getConditionSQL(self):
+    conditions = []
+
+    if self.thick_range and len(self.thick_range) == 2:
+        conditions.append(f"AND dd.tgtthickness * 1000 BETWEEN {self.thick_range[0]} AND {self.thick_range[1]}")
+    if self.width_range and len(self.width_range) == 2:
+        conditions.append(f"AND dd.tgtwidth BETWEEN {self.width_range[0]} AND {self.width_range[1]}")
+    if self.length_range and len(self.length_range) == 2:
+        conditions.append(f"AND dd.tgtlength BETWEEN {self.length_range[0]} AND {self.length_range[1]}")
+    if self.date_range and len(self.date_range) == 2:
+        conditions.append(f"AND dd.toc BETWEEN '{self.date_range[0]}' AND '{self.date_range[1]}'")
+    if self.fmTemp_range and len(self.fmTemp_range) == 2:
+        conditions.append(f"AND lmpd.tgttmrestarttemp1 BETWEEN {self.fmTemp_range[0]} AND {self.fmTemp_range[1]}")
+    if self.disTemp_range and len(self.disTemp_range) == 2:
+        conditions.append(f"AND lff.ave_temp_dis BETWEEN {self.disTemp_range[0]} AND {self.disTemp_range[1]}")
+
+    return conditions
+
 def getTrendBar(self):
     sql_start = f"{self.start_date} 00:00:00"
     sql_end = f"{self.end_date} 23:59:59"
@@ -49,5 +67,32 @@ def getBoxData(self):
             dd.toc
     '''.format(start=sql_start, end=sql_end)
     data, col = queryDataFromDatabase(sql)
+    return data, col
+
+
+def getScatterData(self):
+    base_sql = '''
+            SELECT
+                dd.upid,
+                dd.toc,
+                dd.platetype,
+                dd.stats,
+                dd.status_fqc,
+                dd.status_cooling,
+                ddp.p_f_label,
+                lff.ave_temp_dis,
+                lmpd.tgttmrestarttemp1 
+            FROM
+                app.deba_dump_data dd
+                LEFT JOIN dcenter.l2_fu_flftr60 lff ON lff.upid = dd.upid
+                LEFT JOIN dcenter.l2_m_primary_data lmpd ON lmpd.upid = dd.upid
+                LEFT JOIN app.deba_dump_properties ddp ON dd.upid = ddp.upid 
+            WHERE 1=1 
+        '''
+
+    conditions = getConditionSQL(self)
+
+    final_sql = base_sql + " " + " ".join(conditions) + " ORDER BY dd.toc LIMIT 2000"
+    data, col = queryDataFromDatabase(final_sql)
     return data, col
 
