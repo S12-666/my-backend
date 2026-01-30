@@ -12,30 +12,20 @@ class GetScatterDataApi(Resource):
     def post(self):
         try:
             json_data = request.get_json(force=True)
-            if not json_data:
-                return response_wrapper({}, 400, "No data received")
 
-            filter_keys = [
-                'tgtthick',
-                'tgtwidth',
-                'tgtlength',
-                'dis_temp',
-                'fm_temp',
-                'date_range'
-            ]
+            list_keys = ['tgtthick', 'tgtwidth', 'tgtlength', 'dis_temp', 'fm_temp', 'date_range']
+            string_keys = ['method']
 
             para = {}
-
-            for key in filter_keys:
+            for key in list_keys:
                 raw_val = json_data.get(key, "[]")
                 try:
                     parsed_val = ast.literal_eval(raw_val)
-                    if not isinstance(parsed_val, list):
-                        parsed_val = []
-                    para[key] = parsed_val
+                    para[key] = parsed_val if isinstance(parsed_val, list) else []
                 except (ValueError, SyntaxError):
-                    print(f"参数 {key} 解析失败: {raw_val}")
                     para[key] = []
+            for key in string_keys:
+                para[key] = json_data.get(key, "tsne")
         except Exception as e:
             print(f"参数解析错误:{e}")
             return response_wrapper({}, 400, f"Parameter Error: {str(e)}")

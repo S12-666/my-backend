@@ -5,6 +5,7 @@ from ..api import singelSteel
 from ..methods.dataProcessing import getpfList, getFqcList, slabel
 from ..utils import label_judge
 from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
 class GetScatterDataController:
     def __init__(self, para):
         self.para = para
@@ -14,9 +15,12 @@ class GetScatterDataController:
         self.disTemp_range = para.get('dis_temp')
         self.fmTemp_range = para.get('fm_temp')
         self.date_range = para.get('date_range')
+        self.method = para.get('method')
 
     def run(self):
         data, col = getScatterData(self)
+        if len(data) == 0:
+            return None
         X = []
 
         for item in data:
@@ -37,7 +41,10 @@ class GetScatterDataController:
                 X.append(process_data)
 
         X = pd.DataFrame(X).fillna(0).values.tolist()
-        X_embedded = TSNE(n_components=2).fit_transform(X)
+        if self.method == 'tsne':
+            X_embedded = TSNE(n_components=2).fit_transform(X)
+        else:
+            X_embedded = PCA(n_components=2).fit_transform(X)
 
         index = 0
         upload_json = {}
