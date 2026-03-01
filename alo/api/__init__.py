@@ -55,3 +55,4 @@ from . import sendlPredictionApi
 from . import getTrendDataApi
 from . import getScatterDataApi
 from . import getBatchDataApi
+from . import getDetailDataApi

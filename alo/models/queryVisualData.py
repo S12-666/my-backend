@@ -166,3 +166,66 @@ def getlabelFlag(upids):
                 '''.format(upid='dd. upid in' + upids)
     rows, cols = queryDataFromDatabase(sql_query)
     return rows, cols
+
+
+def getDetailDataByUpids(upids):
+    if not upids:
+        return [], []
+    upids_str = ", ".join([f"'{str(upid)}'" for upid in upids])
+    sql_query = f'''
+        SELECT
+            dd.upid,
+            dd.tgtthickness,
+            dd.tgtwidth,
+            dd.tgtlength,
+            dd.platetype,
+            dd.toc,
+            dd.stats,
+            dd.status_cooling,
+            ddp.p_f_label
+        FROM 
+            app.deba_dump_data dd
+        LEFT JOIN 
+            app.deba_dump_properties ddp ON dd.upid = ddp.upid 
+        WHERE 
+            1=1
+            AND dd.upid IN ({upids_str})
+        ORDER BY 
+            dd.upid
+    '''
+    rows, cols = queryDataFromDatabase(sql_query)
+
+    return rows, cols
+
+def getTrainData(platetype):
+
+    sql_query = f'''
+        SELECT
+	        * 
+        FROM
+	        (
+	        SELECT
+		        dd.upid,
+		        dd.platetype,
+		        dd.stats,
+		        dd.status_cooling,
+		        ddp.p_f_label,
+		        dd.toc
+	        FROM
+		        app.deba_dump_data dd
+		        LEFT JOIN app.deba_dump_properties ddp ON ddp.upid = dd.upid 
+	        WHERE
+		        dd.platetype = '{platetype}'
+		        AND ddp.p_f_label IS NOT NULL 
+		        AND jsonb_array_length ( ddp.p_f_label :: jsonb ) > 0
+		        AND NOT ( ddp.p_f_label :: jsonb @> '0' :: jsonb ) 
+	        ORDER BY
+		        dd.toc DESC 
+		        LIMIT 2000 
+	        ) AS latest_data 
+        ORDER BY
+	    toc ASC;
+    '''
+    rows, cols = queryDataFromDatabase(sql_query)
+
+    return rows, cols

@@ -541,25 +541,21 @@ def getLabelData_4(start, end, type):
 
 def getpfList(p_f_label):
     return p_f_label if p_f_label else []
-def plateHasDefect(status: int, p_f_label: dict) -> int:
-    if status == 1:
-        return 404
+def plateHasDefect(p_f_label: dict) -> int:
     label = getpfList(p_f_label)
     if 0 not in label:
         if (np.array(label).sum() == 10) or (len(label) == 0):
-            return 404
+            return 2
         else:
             return 1
     else:
         return 0
-def plateDetailedDefect(status: int, p_f_label: list, idx: int) -> int:
-    if status == 1:
-        return 404
-    else:
-        if 0 not in p_f_label:
-            if (np.array(p_f_label).sum() == 10) or (len(p_f_label) == 0):
-                return 404
-        return p_f_label[idx]
+def plateDetailedDefect(p_f_label: list, idx: int) -> int:
+
+    if 0 not in p_f_label:
+        if (np.array(p_f_label).sum() == 10) or (len(p_f_label) == 0):
+            return 2
+    return p_f_label[idx]
 def fillListTail(data: list, length: int, fill=0) -> list:
     if len(data) >= length:
         return data
