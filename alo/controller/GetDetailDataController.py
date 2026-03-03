@@ -2,8 +2,6 @@ import pandas as pd
 import numpy as np
 import time
 from scipy.stats import norm, f
-
-from ..models.diagnosesData import diagnosesTrainDataByArgs, diagnosesTestDataByUpid
 from ..methods.dataProcessing import plateDetailedDefect, rawDataToModelData
 from ..methods.define import data_names, flag_names, specifications, meas_index
 from ..methods.DiagnosesAlgorithm import DiagnosesAlgorithm
@@ -43,13 +41,7 @@ class GetDetailDataController:
         # 2. 计算基准统计范围 (用于前端规格上下限)
         train_df['label'] = train_df.apply(lambda x: plateHasDefect(x['p_f_label']), axis=1)
 
-        # 3. 提取特征矩阵 (合并为单一基准模型)
-        # 提取总体良品作为 PCA 的基准空间 (正常生产态)
-        good_train_df = train_df[train_df['label'] == 1]
-
-        # 极端情况兜底：如果这 2000 条里一条良品都没有，就退而求其次用全部数据
-        if good_train_df.empty:
-            good_train_df = train_df
+        good_train_df = train_df
 
         self.train, _ = rawDataToModelData(good_train_df)
         self.test, test_labels_matrix = rawDataToModelData(test_df)
@@ -66,6 +58,8 @@ class GetDetailDataController:
         for i, upid in enumerate(upids):
             current_row = test_df.iloc[i]
             plate_res = []
+            contj_list = pca_res[i].get('CONTJ', [])
+            contq_list = pca_res[i].get('contq', [])
             for j, name in enumerate(self.data_names):
                 # single_res[i] 是一条钢板的所有测点列表，j 是对应的测点索引
                 # pca_res[i] 是一条钢板的全局指标字典
@@ -73,6 +67,8 @@ class GetDetailDataController:
                     'name': name,
                     'T2': float(format(pca_res[i].get('T2', 0), '.4f')),
                     'Q': float(format(pca_res[i].get('Q', 0), '.4f')),
+                    'T2_cont': float(format(contj_list[j], '.4f')) if j < len(contj_list) else 0.0,
+                    'Q_cont': float(format(contq_list[j], '.4f')) if j < len(contq_list) else 0.0,
                     'orig_v': float(format(single_res[i][j].get('original_value', 0), '.4f')),
                     'orig_l': float(format(single_res[i][j].get('original_l', 0), '.4f')),
                     'orig_u': float(format(single_res[i][j].get('original_u', 0), '.4f')),
@@ -107,134 +103,143 @@ class GetDetailDataController:
 
 class DiagnosesAlgorithm:
     def __init__(self, train, test, data_names):
-        # 此时的 train 直接是一个 numpy 二维数组，不再是 list
-        self.train = train
-        self.test = test
+        # 统一转为 numpy 数组，方便矩阵运算
+        self.train = np.array(train)
+        self.test = np.array(test)
         self.data_names = data_names
+
+        # 预留存储训练好的模型参数
+        self.pca_model = None
+        self.single_dim_model = None
 
     def run(self, method):
         diag_res = []
-        # 直接遍历测试集的每一块钢板
-        for plate in self.test:
-            # 不再需要内层循环遍历 5 个模型，直接拿 self.train 这一套基准去算
-            if method == 'PCA':
-                datum = self.PCA(self.train, [plate])
-            elif method == 'single_demension':
-                datum = self.single_demension(self.train, [plate], 0.75, 0.95, 0.99)
 
+        # 1. 训练阶段：在循环外预先计算基准模型参数（仅执行一次）
+        if method == 'PCA':
+            self._fit_pca()
+        elif method == 'single_demension':
+            self._fit_single_demension(0.75, 0.95, 0.99)
+
+        # 2. 预测阶段：只进行纯数学代入计算，速度极快
+        for plate in self.test:
+            if method == 'PCA':
+                datum = self._predict_pca(plate)
+            elif method == 'single_demension':
+                datum = self._predict_single_demension(plate)
             diag_res.append(datum)
+
         return diag_res
 
-    def PCA(self, train, test):
-        Xtrain = np.array(train)
-        Xtest = np.array(test)
+    # ==================== PCA 算法模块 ====================
+    def _fit_pca(self):
+        """仅对 train 数据执行一次：计算均值、方差、特征向量及控制限"""
+        if self.pca_model is not None:
+            return
 
-        # 安全校验：维度检查与空数据拦截
-        if Xtrain.ndim == 1:
-            if Xtrain.size == 0:
-                m = Xtest.shape[1] if Xtest.ndim == 2 else (len(Xtest) if Xtest.ndim == 1 else 0)
-                return {
-                    'T2UCL1': 0.0, 'T2UCL2': 0.0, 'QUCL': 0.0,
-                    'T2': 0.0, 'Q': 0.0, 'CONTJ': [0.0] * m, 'contq': []
-                }
-            else:
-                Xtrain = Xtrain.reshape(1, -1)
+        Xtrain = self.train
+        if Xtrain.ndim == 1 or Xtrain.size == 0 or Xtrain.shape[0] < 2:
+            self.pca_model = {'valid': False}
+            return
 
         X_row, X_col = Xtrain.shape
-        if X_row < 2:
-            m = Xtest.shape[1] if Xtest.ndim == 2 else X_col
-            return {
-                'T2UCL1': 0.0, 'T2UCL2': 0.0, 'QUCL': 0.0,
-                'T2': 0.0, 'Q': 0.0, 'CONTJ': [0.0] * m, 'contq': []
-            }
-
-        if Xtest.ndim == 1:
-            Xtest = Xtest.reshape(1, -1)
-
         X_mean = np.mean(Xtrain, axis=0)
         X_std = np.std(Xtrain, axis=0)
         X_std[X_std == 0] = 1e-8
-        Xtrain = (Xtrain - np.tile(X_mean, (X_row, 1))) / np.tile(X_std, (X_row, 1))
 
-        sigmaXtrain = np.cov(Xtrain.T)
+        Xtrain_norm = (Xtrain - X_mean) / X_std
+
+        # 协方差与特征值分解
+        sigmaXtrain = np.cov(Xtrain_norm.T)
         lamda, T = np.linalg.eigh(sigmaXtrain)
 
-        num_pc = 1
+        # 选取主成分
         D = -np.sort(-lamda, axis=0)
-        lamda_mat = np.diag(lamda)
-        while D[0:num_pc].sum(axis=0) / D.sum(axis=0) < 0.9:
-            num_pc = num_pc + 1
+        D[D < 1e-8] = 1e-8
+        num_pc = 1
+        # D = -np.sort(-lamda, axis=0)
+        while D[0:num_pc].sum() / D.sum() < 0.9:
+            num_pc += 1
 
         P = T[:, np.arange(X_col - num_pc, X_col)]
+        P_mat = np.matrix(P)
+
+        # 计算控制限 (UCL)
         T2UCL1 = num_pc * (X_row - 1) * (X_row + 1) * f.ppf(0.99, num_pc, X_row - num_pc) / (X_row * (X_row - num_pc))
         T2UCL2 = num_pc * (X_row - 1) * (X_row + 1) * f.ppf(0.95, num_pc, X_row - num_pc) / (X_row * (X_row - num_pc))
 
-        theta = np.zeros(3)
-        for i in range(3):
-            theta[i] = np.sum((D[np.arange(num_pc, X_col)]) ** (i + 1))
-        h0 = 1 - 2 * theta[0] * theta[2] / (3 * theta[1] ** 2)
+        theta = [np.sum((D[num_pc:X_col]) ** (i + 1)) for i in range(3)]
+        h0 = 1 - 2 * theta[0] * theta[2] / (3 * theta[1] ** 2) if theta[1] != 0 else 1
         ca = norm.ppf(0.99, 0, 1)
 
-        inner_val = h0 * ca * np.sqrt(np.abs(2. * theta[1])) / theta[0] + 1 + theta[1] * h0 * (h0 - 1.) / (
-                    theta[0] ** 2.)
-        inner_val = max(inner_val, 1e-8)
-        QUCL = theta[0] * (inner_val) ** (1. / h0)
+        QUCL = 0.0
+        if theta[0] != 0:
+            inner_val = h0 * ca * np.sqrt(np.abs(2. * theta[1])) / theta[0] + 1 + theta[1] * h0 * (h0 - 1.) / (
+                        theta[0] ** 2.)
+            inner_val = max(inner_val, 1e-8)
+            QUCL = theta[0] * (inner_val) ** (1. / h0)
 
-        n, m = Xtest.shape
-        Xtest = (Xtest - np.tile(X_mean, (n, 1))) / np.tile(X_std, (n, 1))
-        P = np.matrix(P)
-        r, y = (P * P.T).shape
-        I = np.eye(r, y)
+        # 取出被选中的主成分特征值
+        selected_lamda = lamda[np.arange(X_col - num_pc, X_col)]
 
-        T2 = np.zeros((n, 1))
-        Q = np.zeros((n, 1))
-        for i in range(n):
-            T2[i] = np.matrix(Xtest[i, :]) * P * np.matrix(
-                (lamda_mat[np.ix_(np.arange(m - num_pc, m), np.arange(m - num_pc, m))])).I * P.T * np.matrix(
-                Xtest[i, :]).T
-            Q[i] = np.matrix(Xtest[i, :]) * (I - P * P.T) * np.matrix(Xtest[i, :]).T
+        # 【核心修复】：防止除以0或极小数导致无穷大
+        # 将所有小于 1e-6 的特征值强制拉平到 1e-6
+        selected_lamda = np.where(selected_lamda < 1e-6, 1e-6, selected_lamda)
 
-        test_Num = 0
-        S = np.array(np.matrix(Xtest[test_Num, :]) * P[:, np.arange(0, num_pc)])
-        S = S[0]
+        # 然后再求逆
+        lamda_inv = np.matrix(np.diag(1.0 / selected_lamda))
+        I_minus_PPT = np.eye(X_col) - P_mat * P_mat.T
 
-        r_list = []
-        for i in range(num_pc):
-            if S[i] ** 2 / lamda_mat[i, i] > T2UCL1 / num_pc:
-                r_list.append(i)
+        # 保存模型
+        self.pca_model = {
+            'valid': True, 'mean': X_mean, 'std': X_std, 'P': P_mat,
+            'lamda_inv': lamda_inv, 'I_minus_PPT': I_minus_PPT,
+            'num_pc': num_pc, 'D': D, 'T2UCL1': T2UCL1, 'T2UCL2': T2UCL2, 'QUCL': QUCL
+        }
 
-        cont = np.zeros((len(r_list), m))
-        if len(r_list) > 0:
-            for i, pc_idx in enumerate(r_list):
+    def _predict_pca(self, plate):
+        """对单块钢板进行高速向量运算"""
+        mod = self.pca_model
+        m = len(plate)
+        if not mod.get('valid', False):
+            return {
+                'T2UCL1': 0.0, 'T2UCL2': 0.0, 'QUCL': 0.0,
+                'T2': 0.0, 'Q': 0.0, 'CONTJ': [0.0] * m, 'contq': [0.0] * m
+            }
+
+        Xtest_norm = (np.array(plate) - mod['mean']) / mod['std']
+        Xtest_mat = np.matrix(Xtest_norm)
+
+        # 计算得分
+        T2 = Xtest_mat * mod['P'] * mod['lamda_inv'] * mod['P'].T * Xtest_mat.T
+        Q = Xtest_mat * mod['I_minus_PPT'] * Xtest_mat.T
+
+        # 计算贡献度 (Contribution)
+        S = np.array(Xtest_mat * mod['P'])[0]
+        cont_t2 = np.zeros(m)
+        D_sub = mod['D'][m - mod['num_pc']:]
+
+        for i in range(mod['num_pc']):
+            if (S[i] ** 2 / D_sub[i]) > (mod['T2UCL1'] / mod['num_pc']):
                 for j in range(m):
-                    cont[i][j] = np.fabs(S[pc_idx] / D[pc_idx] * P[j, pc_idx] * Xtest[test_Num, j])
+                    cont_t2[j] += np.fabs(S[i] / D_sub[i] * mod['P'][j, i] * Xtest_norm[j])
 
-        CONTJ = []
-        for j in range(m):
-            CONTJ.append(np.sum(cont[:, j]))
-
-        e = np.matrix(Xtest[test_Num, :]) * (I - P * P.T)
-        e = np.array(e)[0]
+        e = np.array(Xtest_mat * mod['I_minus_PPT'])[0]
         contq = e ** 2
 
         return {
-            'T2UCL1': float(T2UCL1),
-            'T2UCL2': float(T2UCL2),
-            'QUCL': float(QUCL),
-            'T2': float(T2[0, 0]) if T2.size > 0 else 0.0,
-            'Q': float(Q[0, 0]) if Q.size > 0 else 0.0,
-            'CONTJ': CONTJ,
-            'contq': contq.tolist()
+            'T2UCL1': float(mod['T2UCL1']), 'T2UCL2': float(mod['T2UCL2']), 'QUCL': float(mod['QUCL']),
+            'T2': float(T2[0, 0]), 'Q': float(Q[0, 0]),
+            'CONTJ': cont_t2.tolist(), 'contq': contq.tolist()
         }
-    def single_demension(self, train, test, quantile, extremum_quantile, super_extremum_quantile):
+
+    # ==================== 单变量分位数模块 ====================
+    def _fit_single_demension(self, q1, q2, q3):
+        """仅对 train 数据执行一次：计算最大最小边界和各个分位数"""
         meas_range = meas_index()
-        train_np = np.array(train)
-        test_np = np.array(test)
+        train_meas = self.train[:, meas_range[0]:meas_range[1] + 1]
+        train_without_meas = np.concatenate((self.train[:, 0:meas_range[0]], self.train[:, meas_range[1] + 1:]), axis=1)
 
-        train_meas = train_np[:, meas_range[0]:meas_range[1] + 1]
-        train_without_meas = np.concatenate((train_np[:, 0:meas_range[0]], train_np[:, meas_range[1] + 1:]), axis=1)
-
-        # 防止除以0
         meas_diff = train_meas.max(axis=0) - train_meas.min(axis=0)
         meas_diff[meas_diff == 0] = 1
         without_meas_diff = train_without_meas.max(axis=0) - train_without_meas.min(axis=0)
@@ -243,79 +248,77 @@ class DiagnosesAlgorithm:
         norm_train_meas = ((train_meas - train_meas.min(axis=0)) / meas_diff)
         norm_train_without_meas = ((train_without_meas - train_without_meas.min(axis=0)) / without_meas_diff)
 
-        test_meas = test_np[:, meas_range[0]:meas_range[1] + 1]
-        test_without_meas = np.concatenate((test_np[:, 0:meas_range[0]], test_np[:, meas_range[1] + 1:]), axis=1)
-        norm_test_meas = ((test_meas - train_meas.min(axis=0)) / meas_diff)
-        norm_test_without_meas = ((test_without_meas - train_without_meas.min(axis=0)) / without_meas_diff)
+        # 缓存计算结果
+        self.single_dim_model = {
+            'meas_range': meas_range,
+            'train_meas_min': train_meas.min(axis=0),
+            'meas_diff': meas_diff,
+            'train_without_meas_min': train_without_meas.min(axis=0),
+            'without_meas_diff': without_meas_diff,
+
+            # 分别缓存测量变量和过程变量的多级预警线（原始值和归一化值）
+            'limits_without_meas': self.myQuantile(train_without_meas, q1, q2, q3),
+            'limits_meas': self.myQuantile(train_meas, q1, q2, q3),
+            'norm_limits_without_meas': self.myQuantile(norm_train_without_meas, q1, q2, q3),
+            'norm_limits_meas': self.myQuantile(norm_train_meas, q1, q2, q3)
+        }
+
+    def _predict_single_demension(self, plate):
+        """利用缓存好的分位线快速装配单条钢板的数据"""
+        mod = self.single_dim_model
+        meas_range = mod['meas_range']
+
+        plate = np.array(plate)
+        test_meas = plate[meas_range[0]:meas_range[1] + 1]
+        test_without_meas = np.concatenate((plate[0:meas_range[0]], plate[meas_range[1] + 1:]))
+
+        norm_test_meas = (test_meas - mod['train_meas_min']) / mod['meas_diff']
+        norm_test_without_meas = (test_without_meas - mod['train_without_meas_min']) / mod['without_meas_diff']
 
         norm_test_meas[np.isnan(norm_test_meas)] = 0
         norm_test_without_meas[np.isnan(norm_test_without_meas)] = 0
 
-        lower_limit, upper_limit, \
-            extremum_lower_limit, extremum_upper_limit, \
-            s_extremum_lower_limit, s_extremum_upper_limit = \
-            self.myQuantile(train_without_meas, quantile, extremum_quantile, super_extremum_quantile)
+        # 解构基准线数据
+        l_wm, u_wm, el_wm, eu_wm, sel_wm, seu_wm = mod['limits_without_meas']
+        nl_wm, nu_wm, nel_wm, neu_wm, nsel_wm, nseu_wm = mod['norm_limits_without_meas']
 
-        meas_lower_limit, meas_upper_limit, \
-            meas_extremum_lower_limit, meas_extremum_upper_limit, \
-            meas_s_extremum_lower_limit, meas_s_extremum_upper_limit = \
-            self.myQuantile(train_meas, quantile, extremum_quantile, super_extremum_quantile)
-
-        norm_lower_limit, norm_upper_limit, \
-            norm_extremum_lower_limit, norm_extremum_upper_limit, \
-            norm_s_extremum_lower_limit, norm_s_extremum_upper_limit = \
-            self.myQuantile(norm_train_without_meas, quantile, extremum_quantile, super_extremum_quantile)
-
-        norm_meas_lower_limit, norm_meas_upper_limit, \
-            norm_meas_extremum_lower_limit, norm_meas_extremum_upper_limit, \
-            norm_meas_s_extremum_lower_limit, norm_meas_s_extremum_upper_limit = \
-            self.myQuantile(norm_train_meas, quantile, extremum_quantile, super_extremum_quantile)
+        l_m, u_m, el_m, eu_m, sel_m, seu_m = mod['limits_meas']
+        nl_m, nu_m, nel_m, neu_m, nsel_m, nseu_m = mod['norm_limits_meas']
 
         result = []
-        meas_i = 0
-        proc_i = 0
+        meas_i, proc_i = 0, 0
+
         for idx, col_name in enumerate(self.data_names):
-            if meas_range[0] <= idx and idx <= meas_range[1]:
+            if meas_range[0] <= idx <= meas_range[1]:
                 result.append({
                     'name': col_name,
-                    'original_value': test_meas[0][meas_i],
-                    'original_l': meas_lower_limit[meas_i],
-                    'original_u': meas_upper_limit[meas_i],
-                    'extremum_original_l': meas_extremum_lower_limit[meas_i],
-                    'extremum_original_u': meas_extremum_upper_limit[meas_i],
-                    's_extremum_original_l': meas_s_extremum_lower_limit[meas_i],
-                    's_extremum_original_u': meas_s_extremum_upper_limit[meas_i],
-                    'value': norm_test_meas[0][meas_i],
-                    'l': norm_meas_lower_limit[meas_i],
-                    'u': norm_meas_upper_limit[meas_i],
-                    'extremum_l': norm_meas_extremum_lower_limit[meas_i],
-                    'extremum_u': norm_meas_extremum_upper_limit[meas_i],
-                    's_extremum_l': norm_meas_s_extremum_lower_limit[meas_i],
-                    's_extremum_u': norm_meas_s_extremum_upper_limit[meas_i]
+                    'original_value': test_meas[meas_i],
+                    'original_l': l_m[meas_i], 'original_u': u_m[meas_i],
+                    'extremum_original_l': el_m[meas_i], 'extremum_original_u': eu_m[meas_i],
+                    's_extremum_original_l': sel_m[meas_i], 's_extremum_original_u': seu_m[meas_i],
+                    'value': norm_test_meas[meas_i],
+                    'l': nl_m[meas_i], 'u': nu_m[meas_i],
+                    'extremum_l': nel_m[meas_i], 'extremum_u': neu_m[meas_i],
+                    's_extremum_l': nsel_m[meas_i], 's_extremum_u': nseu_m[meas_i]
                 })
                 meas_i += 1
             else:
                 result.append({
                     'name': col_name,
-                    'original_value': test_without_meas[0][proc_i],
-                    'original_l': lower_limit[proc_i],
-                    'original_u': upper_limit[proc_i],
-                    'extremum_original_l': extremum_lower_limit[proc_i],
-                    'extremum_original_u': extremum_upper_limit[proc_i],
-                    's_extremum_original_l': s_extremum_lower_limit[proc_i],
-                    's_extremum_original_u': s_extremum_upper_limit[proc_i],
-                    'value': norm_test_without_meas[0][proc_i],
-                    'l': norm_lower_limit[proc_i],
-                    'u': norm_upper_limit[proc_i],
-                    'extremum_l': norm_extremum_lower_limit[proc_i],
-                    'extremum_u': norm_extremum_upper_limit[proc_i],
-                    's_extremum_l': norm_s_extremum_lower_limit[proc_i],
-                    's_extremum_u': norm_s_extremum_upper_limit[proc_i]
+                    'original_value': test_without_meas[proc_i],
+                    'original_l': l_wm[proc_i], 'original_u': u_wm[proc_i],
+                    'extremum_original_l': el_wm[proc_i], 'extremum_original_u': eu_wm[proc_i],
+                    's_extremum_original_l': sel_wm[proc_i], 's_extremum_original_u': seu_wm[proc_i],
+                    'value': norm_test_without_meas[proc_i],
+                    'l': nl_wm[proc_i], 'u': nu_wm[proc_i],
+                    'extremum_l': nel_wm[proc_i], 'extremum_u': neu_wm[proc_i],
+                    's_extremum_l': nsel_wm[proc_i], 's_extremum_u': nseu_wm[proc_i]
                 })
                 proc_i += 1
         return result
 
     def myQuantile(self, data, q1, q2, q3):
+        # 逻辑保持不变
         q1_lower = np.quantile(data, 1 - q1, axis=0)
         q1_upper = np.quantile(data, q1, axis=0)
         q2_lower = np.quantile(data, 1 - q2, axis=0)
