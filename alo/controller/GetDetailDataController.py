@@ -60,6 +60,8 @@ class GetDetailDataController:
             plate_res = []
             contj_list = pca_res[i].get('CONTJ', [])
             contq_list = pca_res[i].get('contq', [])
+            current_t2_ucl = pca_res[i].get('T2UCL1', 0)
+            current_q_ucl = pca_res[i].get('QUCL', 0)
             for j, name in enumerate(self.data_names):
                 # single_res[i] 是一条钢板的所有测点列表，j 是对应的测点索引
                 # pca_res[i] 是一条钢板的全局指标字典
@@ -69,6 +71,8 @@ class GetDetailDataController:
                     'Q': float(format(pca_res[i].get('Q', 0), '.4f')),
                     'T2_cont': float(format(contj_list[j], '.4f')) if j < len(contj_list) else 0.0,
                     'Q_cont': float(format(contq_list[j], '.4f')) if j < len(contq_list) else 0.0,
+                    'T2UCL1': float(format(current_t2_ucl, '.4f')),
+                    'QUCL': float(format(current_q_ucl, '.4f')),
                     'orig_v': float(format(single_res[i][j].get('original_value', 0), '.4f')),
                     'orig_l': float(format(single_res[i][j].get('original_l', 0), '.4f')),
                     'orig_u': float(format(single_res[i][j].get('original_u', 0), '.4f')),
@@ -145,60 +149,67 @@ class DiagnosesAlgorithm:
         X_row, X_col = Xtrain.shape
         X_mean = np.mean(Xtrain, axis=0)
         X_std = np.std(Xtrain, axis=0)
-        X_std[X_std == 0] = 1e-8
+
+        # 🚀 修复点 1：防止由于变量为常数导致的除法无限放大
+        # 如果标准差接近 0，强制设为 1，这样归一化后保留原始偏离量
+        X_std[X_std < 1e-6] = 1.0
 
         Xtrain_norm = (Xtrain - X_mean) / X_std
 
-        # 协方差与特征值分解
-        sigmaXtrain = np.cov(Xtrain_norm.T)
+        # 计算协方差与特征值 (rowvar=False 代表列是变量)
+        sigmaXtrain = np.cov(Xtrain_norm, rowvar=False)
         lamda, T = np.linalg.eigh(sigmaXtrain)
 
-        # 选取主成分
-        D = -np.sort(-lamda, axis=0)
-        D[D < 1e-8] = 1e-8
-        num_pc = 1
-        # D = -np.sort(-lamda, axis=0)
-        while D[0:num_pc].sum() / D.sum() < 0.9:
-            num_pc += 1
+        # 🚀 修复点 2：主动将特征值和特征向量【降序排列】，彻底理清对应关系
+        idx = np.argsort(lamda)[::-1]
+        lamda_desc = lamda[idx]
+        T_desc = T[:, idx]
 
-        P = T[:, np.arange(X_col - num_pc, X_col)]
-        P_mat = np.matrix(P)
+        # 强行拉平由于浮点精度产生的极小值或负数特征值
+        lamda_desc = np.maximum(lamda_desc, 1e-8)
+
+        # 选取主成分 (根据累计方差贡献率 > 90%)
+        total_var = np.sum(lamda_desc)
+        cum_var = np.cumsum(lamda_desc) / total_var
+        num_pc = np.searchsorted(cum_var, 0.9) + 1
+        num_pc = min(num_pc, X_col)  # 兜底防止越界
+
+        # 获取选定的载荷矩阵 P 和 对应的特征值
+        P = T_desc[:, :num_pc]
+        selected_lamda = lamda_desc[:num_pc]
 
         # 计算控制限 (UCL)
-        T2UCL1 = num_pc * (X_row - 1) * (X_row + 1) * f.ppf(0.99, num_pc, X_row - num_pc) / (X_row * (X_row - num_pc))
-        T2UCL2 = num_pc * (X_row - 1) * (X_row + 1) * f.ppf(0.95, num_pc, X_row - num_pc) / (X_row * (X_row - num_pc))
+        F_99 = f.ppf(0.99, num_pc, X_row - num_pc)
+        F_95 = f.ppf(0.95, num_pc, X_row - num_pc)
+        T2UCL1 = num_pc * (X_row - 1) * (X_row + 1) * F_99 / (X_row * (X_row - num_pc))
+        T2UCL2 = num_pc * (X_row - 1) * (X_row + 1) * F_95 / (X_row * (X_row - num_pc))
 
-        theta = [np.sum((D[num_pc:X_col]) ** (i + 1)) for i in range(3)]
-        h0 = 1 - 2 * theta[0] * theta[2] / (3 * theta[1] ** 2) if theta[1] != 0 else 1
-        ca = norm.ppf(0.99, 0, 1)
+        # 计算 Q (SPE) 的控制限
+        rem_lamda = lamda_desc[num_pc:]
+        theta = [np.sum(rem_lamda ** (i + 1)) for i in range(3)]
 
         QUCL = 0.0
-        if theta[0] != 0:
-            inner_val = h0 * ca * np.sqrt(np.abs(2. * theta[1])) / theta[0] + 1 + theta[1] * h0 * (h0 - 1.) / (
-                        theta[0] ** 2.)
+        if theta[0] > 1e-8:
+            h0 = 1 - 2 * theta[0] * theta[2] / (3 * theta[1] ** 2) if theta[1] > 1e-8 else 1
+            ca = norm.ppf(0.99)
+            inner_val = h0 * ca * np.sqrt(2. * theta[1]) / theta[0] + 1 + theta[1] * h0 * (h0 - 1.) / (theta[0] ** 2.)
             inner_val = max(inner_val, 1e-8)
             QUCL = theta[0] * (inner_val) ** (1. / h0)
 
-        # 取出被选中的主成分特征值
-        selected_lamda = lamda[np.arange(X_col - num_pc, X_col)]
-
-        # 【核心修复】：防止除以0或极小数导致无穷大
-        # 将所有小于 1e-6 的特征值强制拉平到 1e-6
-        selected_lamda = np.where(selected_lamda < 1e-6, 1e-6, selected_lamda)
-
-        # 然后再求逆
-        lamda_inv = np.matrix(np.diag(1.0 / selected_lamda))
-        I_minus_PPT = np.eye(X_col) - P_mat * P_mat.T
-
-        # 保存模型
         self.pca_model = {
-            'valid': True, 'mean': X_mean, 'std': X_std, 'P': P_mat,
-            'lamda_inv': lamda_inv, 'I_minus_PPT': I_minus_PPT,
-            'num_pc': num_pc, 'D': D, 'T2UCL1': T2UCL1, 'T2UCL2': T2UCL2, 'QUCL': QUCL
+            'valid': True,
+            'mean': X_mean,
+            'std': X_std,
+            'P': P,
+            'selected_lamda': selected_lamda,
+            'num_pc': num_pc,
+            'T2UCL1': T2UCL1,
+            'T2UCL2': T2UCL2,
+            'QUCL': QUCL
         }
 
     def _predict_pca(self, plate):
-        """对单块钢板进行高速向量运算"""
+        """对单块钢板进行极速数学评估"""
         mod = self.pca_model
         m = len(plate)
         if not mod.get('valid', False):
@@ -207,30 +218,41 @@ class DiagnosesAlgorithm:
                 'T2': 0.0, 'Q': 0.0, 'CONTJ': [0.0] * m, 'contq': [0.0] * m
             }
 
+        # 归一化测试数据
         Xtest_norm = (np.array(plate) - mod['mean']) / mod['std']
-        Xtest_mat = np.matrix(Xtest_norm)
 
-        # 计算得分
-        T2 = Xtest_mat * mod['P'] * mod['lamda_inv'] * mod['P'].T * Xtest_mat.T
-        Q = Xtest_mat * mod['I_minus_PPT'] * Xtest_mat.T
+        P = mod['P']
+        selected_lamda = mod['selected_lamda']
 
-        # 计算贡献度 (Contribution)
-        S = np.array(Xtest_mat * mod['P'])[0]
-        cont_t2 = np.zeros(m)
-        D_sub = mod['D'][m - mod['num_pc']:]
+        # 1. 计算主成分得分 S = X * P
+        S = np.dot(Xtest_norm, P)
 
-        for i in range(mod['num_pc']):
-            if (S[i] ** 2 / D_sub[i]) > (mod['T2UCL1'] / mod['num_pc']):
-                for j in range(m):
-                    cont_t2[j] += np.fabs(S[i] / D_sub[i] * mod['P'][j, i] * Xtest_norm[j])
+        # 2. 计算 T2
+        T2 = np.sum((S ** 2) / selected_lamda)
 
-        e = np.array(Xtest_mat * mod['I_minus_PPT'])[0]
-        contq = e ** 2
+        # 3. 计算 Q (重构误差)
+        X_reconstruct = np.dot(S, P.T)
+        E = Xtest_norm - X_reconstruct
+        Q = np.sum(E ** 2)
 
+        # 🚀 修复点：移除原有的 if 拦截阈值，保证前端随时有数据可以画图
+        # 并且将原来的双层 for 循环改写成了矩阵向量化运算，性能极大提升
+
+        # T2 贡献度分解：c_j = sum( | (S_i / lamda_i) * P_ji * X_norm_j | )
+        S_weighted = S / selected_lamda  # shape: (num_pc,)
+
+        # 利用 numpy 广播机制直接生成 (m, num_pc) 的贡献矩阵，然后按行求和
+        cont_matrix = np.abs(P * S_weighted * Xtest_norm[:, np.newaxis])
+        cont_t2 = np.sum(cont_matrix, axis=1)
+
+        # Q 贡献度就是误差的平方
+        contq = E ** 2
+
+        # 强制将结果截断，防范由于极个别恶劣工况产生的 inf 值引发 JSON 序列化崩溃
         return {
             'T2UCL1': float(mod['T2UCL1']), 'T2UCL2': float(mod['T2UCL2']), 'QUCL': float(mod['QUCL']),
-            'T2': float(T2[0, 0]), 'Q': float(Q[0, 0]),
-            'CONTJ': cont_t2.tolist(), 'contq': contq.tolist()
+            'T2': float(np.clip(T2, 0, 1e8)), 'Q': float(np.clip(Q, 0, 1e8)),
+            'CONTJ': np.clip(cont_t2, 0, 1e6).tolist(), 'contq': np.clip(contq, 0, 1e6).tolist()
         }
 
     # ==================== 单变量分位数模块 ====================
