@@ -107,6 +107,12 @@ class RealTimeTrainer:
         pca.fit(X_scaled)
 
         X_recon = pca.inverse_transform(pca.transform(X_scaled))
+
+        squared_errors = np.square(X_scaled - X_recon)
+
+        feature_base_errors = np.mean(squared_errors, axis=0)
+
+        base_value = np.sum(feature_base_errors)
         recon_errors = np.sum(np.square(X_scaled - X_recon), axis=1)
         confidence_level = 99.0
 
@@ -117,7 +123,9 @@ class RealTimeTrainer:
             "scaler": scaler,
             "pca": pca,
             "threshold": threshold,
-            "feature_cols": feature_cols
+            "feature_cols": feature_cols,
+            "feature_base_errors": feature_base_errors,  # 保存特征基准误差
+            "base_value": base_value
         }
 
         metrics = {
@@ -140,27 +148,34 @@ class RealTimeTrainer:
         threshold = model_bundle['threshold']
         feature_cols = model_bundle['feature_cols']
 
-        X_scaled = scaler.transform(X_input)
+        # 提取基准值
+        feature_base_errors = model_bundle['feature_base_errors']
+        base_value = model_bundle['base_value']
 
+        X_scaled = scaler.transform(X_input)
         X_pca = pca.transform(X_scaled)
         X_recon = pca.inverse_transform(X_pca)
 
-        diff = np.abs(X_scaled - X_recon)[0]  # 取第一行
+        # 💡 改进核心 2：计算当前样本的平方误差
+        instance_errors = np.square(X_scaled - X_recon)[0]
+        total_error = np.sum(instance_errors)
 
-        total_error = np.sum(np.square(X_scaled - X_recon))
+        # 💡 改进核心 3：计算伪 SHAP 值 = 当前误差 - 期望误差 (有正有负)
+        shap_values = instance_errors - feature_base_errors
+
         pred_label = 0 if total_error > threshold else 1  # 0异常, 1正常
-
         abnormal_prob = 1 - np.exp(-total_error / threshold)
 
         feature_importance = []
-        for name, contribution, actual in zip(feature_cols, diff, X_input.iloc[0]):
+        for name, shap_val, actual in zip(feature_cols, shap_values, X_input.iloc[0]):
             feature_importance.append({
                 "feature": name,
-                "shap_value": float(contribution),
+                "shap_value": float(shap_val),  # 此时有正有负了
                 "actual_value": float(actual)
             })
 
-        # 排序
-        feature_importance.sort(key=lambda x: x['shap_value'], reverse=True)
+        # 排序：按“绝对贡献度”排序，找出对结果影响最大（无论是推高还是拉低）的前 10 个特征
+        feature_importance.sort(key=lambda x: abs(x['shap_value']), reverse=True)
 
-        return pred_label, abnormal_prob, feature_importance[:10], total_error
+        # 返回时把 base_value 也带出去
+        return pred_label, abnormal_prob, feature_importance[:10], total_error, base_value

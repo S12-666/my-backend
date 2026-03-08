@@ -130,13 +130,13 @@ class SingelPredictionController:
             model_bundle, metrics = RealTimeTrainer.train_pca_anomaly(train_data, feature_cols)
 
             # 2. 预测
-            pred_label, prob, top_features, current_error = RealTimeTrainer.predict_pca(model_bundle, X_input)
+            pred_label, prob, top_features, current_error, base_value = RealTimeTrainer.predict_pca(model_bundle, X_input)
 
             result_dict['predictions'][target_name] = {
                 "status": "success",
                 "pred_label": int(pred_label),
                 "abnormal_prob": round(float(prob), 4),
-                "shap_base_value": 0.0,
+                "shap_base_value": float(base_value),
                 "top_features": top_features,
                 "msg": "基于工艺一致性的重构检测",
                 "model_metrics": metrics,
